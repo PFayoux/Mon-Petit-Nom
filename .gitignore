@@ -33,6 +33,11 @@ yarn-error.*
 # IDE
 .idea/
 
+# Claude Code skills
+.agents/
+.claude/skills/
+skills-lock.json
+
 # local env files
 .env*.local
 
