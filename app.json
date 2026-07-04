@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.MyFindNameApplication"
+      "package": "com.pfayoux.monpetitnom"
     },
     "web": {
       "output": "static",
@@ -34,7 +34,9 @@
           "imageWidth": 76
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "./plugins/withReleaseSigning",
+      "./plugins/withCiVersion"
     ],
     "experiments": {
       "typedRoutes": true,
