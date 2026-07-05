@@ -14,8 +14,8 @@ import { scheduleOnRN } from 'react-native-worklets';
 const DURATION = 600;
 
 const TEXT_LAYERS = [
-  { offset: { x: 3, y: 5 }, color: Colors.light.primaryShadow },
-  { offset: { x: 1, y: 2 }, color: Colors.light.primaryShadow },
+  { offset: { x: 4, y: 7 }, color: Colors.light.primaryShadow },
+  { offset: { x: 2, y: 3 }, color: Colors.light.primaryShadow },
   { offset: { x: 0, y: 0 }, color: Colors.light.primaryPressed },
 ];
 
