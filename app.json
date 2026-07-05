@@ -36,7 +36,8 @@
       ],
       "expo-localization",
       "./plugins/withReleaseSigning",
-      "./plugins/withCiVersion"
+      "./plugins/withCiVersion",
+      ["./plugins/withAndroidWindowBackground", "#FCEEE3"]
     ],
     "experiments": {
       "typedRoutes": true,
