@@ -51,7 +51,7 @@ export function OnboardingScreen() {
               placeholderTextColor={theme.textSecondary}
               style={[
                 styles.input,
-                { color: theme.text, backgroundColor: theme.backgroundElement },
+                { color: theme.text, backgroundColor: theme.surface, borderColor: theme.border },
               ]}
               autoFocus
               returnKeyType="done"
@@ -67,10 +67,11 @@ export function OnboardingScreen() {
               onPress={handleContinue}
               style={({ pressed }) => [
                 styles.button,
-                { backgroundColor: theme.backgroundElement },
-                pressed && styles.pressed,
+                { backgroundColor: pressed ? theme.primaryPressed : theme.primary },
               ]}>
-              <ThemedText type="linkPrimary">{t.onboarding.continueButton}</ThemedText>
+              <ThemedText type="linkPrimary" themeColor="onPrimary">
+                {t.onboarding.continueButton}
+              </ThemedText>
             </Pressable>
           </ThemedView>
         </SafeAreaView>
@@ -109,6 +110,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: Spacing.three,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.three,
     fontSize: 16,
@@ -117,8 +119,5 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.five,
     paddingVertical: Spacing.three,
     alignItems: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
   },
 });

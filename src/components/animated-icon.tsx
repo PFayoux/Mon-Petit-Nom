@@ -3,6 +3,7 @@ import {
   CormorantGaramond_600SemiBold_Italic,
   useFonts,
 } from '@expo-google-fonts/cormorant-garamond';
+import { Colors } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
@@ -13,9 +14,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 const DURATION = 600;
 
 const TEXT_LAYERS = [
-  { offset: { x: 3, y: 5 }, color: '#975F51' },
-  { offset: { x: 1, y: 2 }, color: '#BA7563' },
-  { offset: { x: 0, y: 0 }, color: '#B57261' },
+  { offset: { x: 3, y: 5 }, color: Colors.light.primaryShadow },
+  { offset: { x: 1, y: 2 }, color: Colors.light.primaryShadow },
+  { offset: { x: 0, y: 0 }, color: Colors.light.primaryPressed },
 ];
 
 function LogoMark() {
@@ -77,7 +78,7 @@ export function AnimatedSplashOverlay() {
         }
       })}
       style={StyleSheet.absoluteFill}>
-      <LinearGradient colors={['#FCEEE3', '#F3DCCB']} style={styles.splashOverlay}>
+      <LinearGradient colors={[Colors.light.background, Colors.light.surface]} style={styles.splashOverlay}>
         <LogoMark />
       </LinearGradient>
     </Animated.View>
@@ -89,7 +90,7 @@ export function AnimatedSplashOverlay() {
         });
       }}
       style={StyleSheet.absoluteFill}>
-      <LinearGradient colors={['#FCEEE3', '#F3DCCB']} style={styles.splashOverlay}>
+      <LinearGradient colors={[Colors.light.background, Colors.light.surface]} style={styles.splashOverlay}>
         <LogoMark />
       </LinearGradient>
     </View>
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     height: 240,
     borderRadius: 120,
     borderWidth: 8,
-    borderColor: '#E8927C',
+    borderColor: Colors.light.primary,
     opacity: 0.4,
   },
   textStack: {

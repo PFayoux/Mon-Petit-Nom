@@ -6,7 +6,7 @@ import { DecisionButtons } from '@/components/decision-buttons';
 import { NameCard } from '@/components/name-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
 import { BOY_NAMES } from '@/data/boy-names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTranslation } from '@/i18n/use-translation';
@@ -43,17 +43,15 @@ export default function SwipeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
-          {t.swipe.remainingCount(remaining.length)}
-        </ThemedText>
+        <ThemedView style={styles.deck}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
+            {t.swipe.remainingCount(remaining.length)}
+          </ThemedText>
 
-        {currentName ? (
-          <ThemedView style={styles.deck}>
+          {currentName ? (
             <NameCard name={currentName} />
-          </ThemedView>
-        ) : (
-          <ThemedView style={styles.deck}>
-            <ThemedView type="backgroundElement" style={styles.emptyState}>
+          ) : (
+            <ThemedView type="surface" style={styles.emptyState}>
               <ThemedText type="subtitle" style={styles.centerText}>
                 {t.swipe.emptyTitle}
               </ThemedText>
@@ -61,8 +59,8 @@ export default function SwipeScreen() {
                 {t.swipe.emptySubtitle}
               </ThemedText>
             </ThemedView>
-          </ThemedView>
-        )}
+          )}
+        </ThemedView>
 
         <ThemedView style={styles.controls}>
           <DecisionButtons onSelect={handleDecision} size="large" />
@@ -94,6 +92,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
+    paddingTop: TopTabInset,
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.three,
     alignSelf: 'stretch',
@@ -106,6 +105,7 @@ const styles = StyleSheet.create({
   deck: {
     flex: 1,
     justifyContent: 'center',
+    gap: Spacing.three,
   },
   emptyState: {
     borderRadius: Spacing.four,

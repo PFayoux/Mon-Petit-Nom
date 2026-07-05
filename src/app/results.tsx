@@ -89,7 +89,7 @@ export default function ResultsScreen() {
 
   return (
     <ScrollView
-      style={styles.scrollView}
+      style={[styles.scrollView, { backgroundColor: theme.background }]}
       contentContainerStyle={[
         styles.contentContainer,
         { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + BottomTabInset },
@@ -119,10 +119,10 @@ export default function ResultsScreen() {
           );
         })}
 
-        <ThemedView type="backgroundElement" style={styles.settings}>
+        <ThemedView type="surface" style={styles.settings}>
           <ThemedText type="smallBold">{t.results.settingsTitle}</ThemedText>
 
-          <ThemedView style={styles.settingsRow}>
+          <View style={styles.settingsRow}>
             <ThemedText type="small" themeColor="textSecondary">
               {t.results.displayNameLabel}
             </ThemedText>
@@ -132,9 +132,12 @@ export default function ResultsScreen() {
               onSubmitEditing={handleSaveDisplayName}
               onBlur={handleSaveDisplayName}
               returnKeyType="done"
-              style={[styles.input, { color: theme.text, backgroundColor: theme.background }]}
+              style={[
+                styles.input,
+                { color: theme.text, backgroundColor: theme.background, borderColor: theme.border },
+              ]}
             />
-          </ThemedView>
+          </View>
 
           <Pressable
             onPress={handleResetPress}
@@ -185,6 +188,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderRadius: Spacing.two,
+    borderWidth: 1,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 16,
