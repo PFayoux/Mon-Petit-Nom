@@ -12,8 +12,13 @@ export default function AppTabs() {
   return (
     <NativeTabs
       backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
+      indicatorColor={colors.primary}
+      rippleColor={colors.primaryPressed}
+      iconColor={{ default: colors.textSecondary, selected: colors.onPrimary }}
+      labelStyle={{
+        default: { color: colors.textSecondary },
+        selected: { color: colors.primary },
+      }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>{t.tabs.swipe}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

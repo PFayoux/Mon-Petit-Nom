@@ -10,7 +10,7 @@ type NameCardProps = {
 
 export function NameCard({ name }: NameCardProps) {
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
+    <ThemedView type="surface" style={styles.card}>
       <ThemedText type="title" style={styles.name}>
         {name}
       </ThemedText>

@@ -42,8 +42,14 @@ export function DecisionButtons({ onSelect, selectedStatus, size = 'large' }: De
             style={({ pressed }) => [
               styles.button,
               isCompact && styles.buttonCompact,
-              { backgroundColor: isSelected ? theme.backgroundSelected : theme.backgroundElement },
-              pressed && styles.pressed,
+              {
+                backgroundColor: isSelected
+                  ? pressed
+                    ? theme.primaryPressed
+                    : theme.primary
+                  : theme.surface,
+              },
+              pressed && !isSelected && styles.pressed,
             ]}>
             <ThemedText style={isCompact ? styles.emojiCompact : styles.emoji}>
               {DECISION_EMOJI[status]}
