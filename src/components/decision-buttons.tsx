@@ -85,9 +85,11 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 28,
+    lineHeight: 34,
   },
   emojiCompact: {
     fontSize: 16,
+    lineHeight: 20,
   },
   pressed: {
     opacity: 0.7,

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
 import { NameCard } from '@/components/name-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
+import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
 import { BOY_NAMES } from '@/data/boy-names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTranslation } from '@/i18n/use-translation';
@@ -16,6 +16,7 @@ import type { ReviewStatus } from '@/types/name';
 export default function SwipeScreen() {
   const { reviews, setReview, clearReview } = useAppStore();
   const t = useTranslation();
+  const insets = useSafeAreaInsets();
 
   const [order, setOrder] = useState<string[]>(() => shuffle(BOY_NAMES));
   const [history, setHistory] = useState<string[]>([]);
@@ -42,7 +43,14 @@ export default function SwipeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <View
+        style={[
+          styles.safeArea,
+          {
+            paddingTop: insets.top + TopTabInset + Spacing.two,
+            paddingBottom: insets.bottom + Spacing.three,
+          },
+        ]}>
         <ThemedView style={styles.deck}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
             {t.swipe.remainingCount(remaining.length)}
@@ -78,7 +86,7 @@ export default function SwipeScreen() {
             </ThemedText>
           </Pressable>
         </ThemedView>
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -92,8 +100,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    paddingTop: TopTabInset,
-    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.three,
     alignSelf: 'stretch',
     maxWidth: MaxContentWidth,
