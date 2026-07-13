@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -6,11 +6,12 @@ import { Spacing } from '@/constants/theme';
 
 type NameCardProps = {
   name: string;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function NameCard({ name }: NameCardProps) {
+export function NameCard({ name, style }: NameCardProps) {
   return (
-    <ThemedView type="surface" style={styles.card}>
+    <ThemedView type="surface" style={[styles.card, style]}>
       <ThemedText type="title" style={styles.name}>
         {name}
       </ThemedText>
@@ -20,8 +21,6 @@ export function NameCard({ name }: NameCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: '100%',
-    aspectRatio: 3 / 4,
     borderRadius: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',

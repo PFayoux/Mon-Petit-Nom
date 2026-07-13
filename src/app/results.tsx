@@ -6,7 +6,7 @@ import { DecisionButtons } from '@/components/decision-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
 import { BOY_NAMES } from '@/data/boy-names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -92,7 +92,9 @@ export default function ResultsScreen() {
       style={[styles.scrollView, { backgroundColor: theme.background }]}
       contentContainerStyle={[
         styles.contentContainer,
-        { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + BottomTabInset },
+        // The native tab bar already reserves its own space at the bottom, so we
+        // only add breathing room here rather than re-adding the safe-area inset.
+        { paddingTop: insets.top + TopTabInset + Spacing.four, paddingBottom: Spacing.six },
       ]}>
       <ThemedView style={styles.container}>
         {sections.map(({ key, label }) => {
