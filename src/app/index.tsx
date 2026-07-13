@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -13,6 +13,12 @@ import { useTranslation } from '@/i18n/use-translation';
 import { shuffle } from '@/lib/shuffle';
 import type { ReviewStatus } from '@/types/name';
 
+// The name card keeps a portrait 3:4 (width:height) shape, but is sized to the
+// space actually available on screen so it shrinks instead of getting cropped
+// on shorter viewports.
+const CARD_ASPECT_RATIO = 3 / 4;
+const MAX_CARD_WIDTH = 420;
+
 export default function SwipeScreen() {
   const { reviews, setReview, clearReview } = useAppStore();
   const t = useTranslation();
@@ -20,12 +26,30 @@ export default function SwipeScreen() {
 
   const [order, setOrder] = useState<string[]>(() => shuffle(BOY_NAMES));
   const [history, setHistory] = useState<string[]>([]);
+  const [deckSize, setDeckSize] = useState({ width: 0, height: 0 });
 
   const remaining = useMemo(
     () => order.filter((name) => !(name in reviews)),
     [order, reviews]
   );
   const currentName = remaining[0];
+
+  function handleDeckLayout(event: LayoutChangeEvent) {
+    const { width, height } = event.nativeEvent.layout;
+    setDeckSize({ width, height });
+  }
+
+  const cardSize = useMemo(() => {
+    const { width, height } = deckSize;
+    if (width === 0 || height === 0) return null;
+    let cardWidth = Math.min(width, MAX_CARD_WIDTH);
+    let cardHeight = cardWidth / CARD_ASPECT_RATIO;
+    if (cardHeight > height) {
+      cardHeight = height;
+      cardWidth = cardHeight * CARD_ASPECT_RATIO;
+    }
+    return { width: cardWidth, height: cardHeight };
+  }, [deckSize]);
 
   function handleDecision(status: ReviewStatus) {
     if (!currentName) return;
@@ -47,28 +71,31 @@ export default function SwipeScreen() {
         style={[
           styles.safeArea,
           {
+            // The native tab bar already insets content at the bottom, so we
+            // only add breathing room here — never the safe-area inset again.
             paddingTop: insets.top + TopTabInset + Spacing.two,
-            paddingBottom: insets.bottom + Spacing.three,
+            paddingBottom: Spacing.three,
           },
         ]}>
-        <ThemedView style={styles.deck}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
-            {t.swipe.remainingCount(remaining.length)}
-          </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
+          {t.swipe.remainingCount(remaining.length)}
+        </ThemedText>
 
-          {currentName ? (
-            <NameCard name={currentName} />
-          ) : (
-            <ThemedView type="surface" style={styles.emptyState}>
-              <ThemedText type="subtitle" style={styles.centerText}>
-                {t.swipe.emptyTitle}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.centerText}>
-                {t.swipe.emptySubtitle}
-              </ThemedText>
-            </ThemedView>
-          )}
-        </ThemedView>
+        <View style={styles.deck} onLayout={handleDeckLayout}>
+          {cardSize &&
+            (currentName ? (
+              <NameCard name={currentName} style={cardSize} />
+            ) : (
+              <ThemedView type="surface" style={[styles.emptyState, cardSize]}>
+                <ThemedText type="subtitle" style={styles.centerText}>
+                  {t.swipe.emptyTitle}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.centerText}>
+                  {t.swipe.emptySubtitle}
+                </ThemedText>
+              </ThemedView>
+            ))}
+        </View>
 
         <ThemedView style={styles.controls}>
           <DecisionButtons onSelect={handleDecision} size="large" />
@@ -110,8 +137,8 @@ const styles = StyleSheet.create({
   },
   deck: {
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.three,
   },
   emptyState: {
     borderRadius: Spacing.four,
