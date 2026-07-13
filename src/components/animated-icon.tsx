@@ -7,11 +7,19 @@ import { Colors } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 const DURATION = 600;
+
+// The mark is drawn at this reference size and then scaled to the screen width,
+// so it stays crisp (vector circle + text) at any size instead of a raster.
+const BASE_CIRCLE = 240;
+const BASE_KICKER = 24;
+const BASE_TITLE = 72;
+const BASE_LETTER_SPACING = 3;
+const BASE_BORDER = 8;
 
 const TEXT_LAYERS = [
   { offset: { x: 4, y: 7 }, color: Colors.light.primaryShadow },
@@ -20,22 +28,61 @@ const TEXT_LAYERS = [
 ];
 
 function LogoMark() {
+  const { width } = useWindowDimensions();
+  // Fill (almost) the full screen width, capped so it doesn't get absurd on tablets.
+  const circleSize = Math.min(width * 0.82, 460);
+  const scale = circleSize / BASE_CIRCLE;
+
   return (
-    <View style={styles.markContainer}>
-      <View style={styles.circle} />
-      <View style={styles.textStack}>
-        {TEXT_LAYERS.map((layer, index) => (
+    <View style={[styles.markContainer, { width: circleSize, height: circleSize }]}>
+      <View
+        style={[
+          styles.circle,
+          {
+            width: circleSize,
+            height: circleSize,
+            borderRadius: circleSize / 2,
+            borderWidth: BASE_BORDER * scale,
+          },
+        ]}
+      />
+      {TEXT_LAYERS.map((layer, index) => (
           <View
             key={index}
             style={[
               styles.textLayer,
-              { transform: [{ translateX: layer.offset.x }, { translateY: layer.offset.y }] },
+              {
+                transform: [
+                  { translateX: layer.offset.x * scale },
+                  { translateY: layer.offset.y * scale },
+                ],
+              },
             ]}>
-            <Text style={[styles.kicker, { color: layer.color }]}>Mon petit</Text>
-            <Text style={[styles.title, { color: layer.color }]}>nom</Text>
+            <Text
+              style={[
+                styles.kicker,
+                {
+                  color: layer.color,
+                  fontSize: BASE_KICKER * scale,
+                  letterSpacing: BASE_LETTER_SPACING * scale,
+                },
+              ]}>
+              Mon petit
+            </Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: layer.color,
+                  fontSize: BASE_TITLE * scale,
+                  lineHeight: BASE_TITLE * scale,
+                  marginTop: -2 * scale,
+                },
+              ]}>
+              nom
+            </Text>
           </View>
         ))}
-      </View>
     </View>
   );
 }
@@ -110,30 +157,23 @@ const styles = StyleSheet.create({
   },
   circle: {
     position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    borderWidth: 8,
     borderColor: Colors.light.primary,
     opacity: 0.4,
   },
-  textStack: {
-    alignItems: 'center',
-  },
   textLayer: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   kicker: {
     fontFamily: 'CormorantGaramond_500Medium',
-    fontSize: 24,
-    letterSpacing: 3,
     textTransform: 'uppercase',
   },
   title: {
     fontFamily: 'CormorantGaramond_600SemiBold_Italic',
-    fontSize: 72,
-    lineHeight: 72,
-    marginTop: -2,
   },
 });
