@@ -25,6 +25,13 @@ export async function seedAppStore({
   }
 }
 
+// Reads back what the app actually persisted, for asserting on state that
+// isn't (yet) surfaced anywhere in the UI.
+export async function getStoredReviews(): Promise<ReviewMap> {
+  const raw = await AsyncStorage.getItem(REVIEWS_KEY);
+  return raw ? JSON.parse(raw) : {};
+}
+
 function AllProviders({ children }: { children: ReactNode }) {
   return <AppStoreProvider>{children}</AppStoreProvider>;
 }

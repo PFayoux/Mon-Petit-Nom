@@ -18,12 +18,16 @@ type DecisionButtonsProps = {
   onSelect: (status: ReviewStatus) => void;
   selectedStatus?: ReviewStatus;
   size?: 'large' | 'compact';
+  // Background color per status when not selected, overriding theme.surface —
+  // used on Swipe to tint Love/Maybe with the currently chosen review gender.
+  tintColors?: Partial<Record<ReviewStatus, string>>;
 };
 
 export const DecisionButtons = memo(function DecisionButtons({
   onSelect,
   selectedStatus,
   size = 'large',
+  tintColors,
 }: DecisionButtonsProps) {
   const theme = useTheme();
   const t = useTranslation();
@@ -52,7 +56,7 @@ export const DecisionButtons = memo(function DecisionButtons({
                   ? pressed
                     ? theme.primaryPressed
                     : theme.primary
-                  : theme.surface,
+                  : (tintColors?.[status] ?? theme.surface),
               },
               pressed && !isSelected && styles.pressed,
             ]}>

@@ -450,3 +450,14 @@ export function matchesGenderFilter(nameGender: Gender, filter: Gender): boolean
 export function getNamesForGender(filter: Gender): readonly Name[] {
   return NAMES.filter((entry) => matchesGenderFilter(entry.gender, filter));
 }
+
+export const GENDER_BY_NAME: ReadonlyMap<string, Gender> = new Map(
+  NAMES.map((entry) => [entry.name, entry.gender])
+);
+
+// The gender a new review should default to: the active gender filter when
+// it's a specific one, or the name's own default gender when the filter is
+// 'both' (e.g. filtering everyone, a boy-only name still defaults to "boy").
+export function getDefaultReviewGender(filter: Gender, nameGender: Gender): Gender {
+  return filter === 'both' ? nameGender : filter;
+}

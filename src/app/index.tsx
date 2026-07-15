@@ -3,19 +3,20 @@ import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
+import { GenderPicker } from '@/components/gender-picker';
 import { NameCard } from '@/components/name-card';
 import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { NAMES, matchesGenderFilter } from '@/data/names';
+import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesGenderFilter } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
+import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
 import { shuffle } from '@/lib/shuffle';
 import type { Gender, ReviewStatus } from '@/types/name';
 
 const ALL_NAME_STRINGS = NAMES.map((entry) => entry.name);
-const GENDER_BY_NAME = new Map(NAMES.map((entry) => [entry.name, entry.gender]));
 
 // The name card keeps a portrait 3:4 (width:height) shape, but is sized to the
 // space actually available on screen so it shrinks instead of getting cropped
@@ -26,12 +27,15 @@ const MAX_CARD_WIDTH = 420;
 export default function SwipeScreen() {
   const { reviews, setReview, clearReview } = useAppStore();
   const t = useTranslation();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [order, setOrder] = useState<string[]>(() => shuffle(ALL_NAME_STRINGS));
   const [selectedGender, setSelectedGender] = useState<Gender>('both');
   const [history, setHistory] = useState<string[]>([]);
   const [deckSize, setDeckSize] = useState({ width: 0, height: 0 });
+  const [reviewGenderOverride, setReviewGenderOverride] = useState<Gender | null>(null);
+  const [reviewGenderCardName, setReviewGenderCardName] = useState<string | undefined>(undefined);
 
   const genderSections: { key: Gender; label: string }[] = [
     { key: 'boy', label: t.gender.boy },
@@ -47,6 +51,25 @@ export default function SwipeScreen() {
     [order, reviews, selectedGender]
   );
   const currentName = remaining[0];
+
+  // Each new card gets a fresh default (following the deck filter, or the
+  // name's own default gender when the filter is "both") — any manual
+  // override only applies to the card it was made on. Reset during render
+  // (not in an effect) per https://react.dev/learn/you-might-not-need-an-effect.
+  if (currentName !== reviewGenderCardName) {
+    setReviewGenderCardName(currentName);
+    setReviewGenderOverride(null);
+  }
+
+  const reviewGender =
+    reviewGenderOverride ??
+    (currentName ? getDefaultReviewGender(selectedGender, GENDER_BY_NAME.get(currentName)!) : 'both');
+
+  const GENDER_TINT: Record<Gender, string> = {
+    boy: theme.genderBoy,
+    girl: theme.genderGirl,
+    both: theme.genderBoth,
+  };
 
   function handleDeckLayout(event: LayoutChangeEvent) {
     const { width, height } = event.nativeEvent.layout;
@@ -67,7 +90,7 @@ export default function SwipeScreen() {
 
   function handleDecision(status: ReviewStatus) {
     if (!currentName) return;
-    setReview(currentName, status);
+    setReview(currentName, status, reviewGender);
     setHistory((current) => [...current, currentName]);
   }
 
@@ -114,7 +137,12 @@ export default function SwipeScreen() {
         </View>
 
         <ThemedView style={styles.controls}>
-          <DecisionButtons onSelect={handleDecision} size="large" />
+          <GenderPicker selected={reviewGender} onSelect={setReviewGenderOverride} />
+          <DecisionButtons
+            onSelect={handleDecision}
+            size="large"
+            tintColors={{ love: GENDER_TINT[reviewGender], maybe: GENDER_TINT[reviewGender] }}
+          />
           <Pressable
             onPress={handleBack}
             disabled={history.length === 0}
