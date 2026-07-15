@@ -11,7 +11,7 @@ type NameCardProps = {
 
 export function NameCard({ name, style }: NameCardProps) {
   return (
-    <ThemedView type="surface" style={[styles.card, style]}>
+    <ThemedView testID="nameCard" type="surface" style={[styles.card, style]}>
       <ThemedText type="title" style={styles.name}>
         {name}
       </ThemedText>
