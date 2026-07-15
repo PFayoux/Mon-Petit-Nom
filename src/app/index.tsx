@@ -97,7 +97,7 @@ export default function SwipeScreen() {
           {t.swipe.remainingCount(remaining.length)}
         </ThemedText>
 
-        <View style={styles.deck} onLayout={handleDeckLayout}>
+        <View testID="swipeDeck" style={styles.deck} onLayout={handleDeckLayout}>
           {cardSize &&
             (currentName ? (
               <NameCard name={currentName} style={cardSize} />
