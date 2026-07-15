@@ -3,7 +3,7 @@ import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
-import { StatusTabBar } from '@/components/status-tab-bar';
+import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
@@ -22,6 +22,19 @@ type NamesBySection = {
 
 type StatusSectionKey = keyof NamesBySection;
 
+// Only boys' names exist today. Reviews aren't tagged with a gender yet — a
+// name's gender is purely which list it came from — so this filter just picks
+// which name list feeds the status sections below. 'girl' and 'both' arrive
+// once there's a second name list to filter by.
+type GenderKey = 'boy';
+
+function getNamesForGender(gender: GenderKey): readonly string[] {
+  switch (gender) {
+    case 'boy':
+      return BOY_NAMES;
+  }
+}
+
 // Matches DecisionButtons' compact button size — the tallest element in a row —
 // so FlatList's getItemLayout can compute offsets without measuring. The gap
 // between rows is baked into ROW_SLOT_HEIGHT (via row's marginBottom) so every
@@ -30,9 +43,9 @@ const ROW_HEIGHT = 36;
 const ROW_GAP = Spacing.three;
 const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
 
-function groupNamesByStatus(reviews: ReviewMap): NamesBySection {
+function groupNamesByStatus(reviews: ReviewMap, names: readonly string[]): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
-  for (const name of BOY_NAMES) {
+  for (const name of names) {
     const status = reviews[name];
     groups[status ?? 'unmarked'].push(name);
   }
@@ -65,9 +78,13 @@ export default function ResultsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
+  const [selectedGender, setSelectedGender] = useState<GenderKey>('boy');
   const [selectedStatus, setSelectedStatus] = useState<StatusSectionKey>('love');
 
-  const groups = useMemo(() => groupNamesByStatus(reviews), [reviews]);
+  const genderNames = useMemo(() => getNamesForGender(selectedGender), [selectedGender]);
+  const groups = useMemo(() => groupNamesByStatus(reviews, genderNames), [reviews, genderNames]);
+
+  const genderSections: { key: GenderKey; label: string }[] = [{ key: 'boy', label: t.results.genderBoy }];
 
   const sections: { key: StatusSectionKey; label: string; count: number }[] = [
     { key: 'love', label: t.results.lovedSection, count: groups.love.length },
@@ -104,7 +121,9 @@ export default function ResultsScreen() {
           { paddingTop: insets.top + TopTabInset + Spacing.four },
         ]}>
         <View style={styles.headerContent}>
-          <StatusTabBar sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
+          <SegmentedTabBar sections={genderSections} selected={selectedGender} onSelect={setSelectedGender} />
+          <View style={styles.headerGap} />
+          <SegmentedTabBar sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
         </View>
       </View>
 
@@ -144,6 +163,9 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
+  },
+  headerGap: {
+    height: Spacing.two,
   },
   list: {
     flex: 1,
