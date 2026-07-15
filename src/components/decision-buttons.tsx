@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -19,7 +20,11 @@ type DecisionButtonsProps = {
   size?: 'large' | 'compact';
 };
 
-export function DecisionButtons({ onSelect, selectedStatus, size = 'large' }: DecisionButtonsProps) {
+export const DecisionButtons = memo(function DecisionButtons({
+  onSelect,
+  selectedStatus,
+  size = 'large',
+}: DecisionButtonsProps) {
   const theme = useTheme();
   const t = useTranslation();
   const isCompact = size === 'compact';
@@ -59,7 +64,7 @@ export function DecisionButtons({ onSelect, selectedStatus, size = 'large' }: De
       })}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: {
