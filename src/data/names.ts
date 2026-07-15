@@ -2027,6 +2027,10 @@ export const GENDER_BY_NAME: ReadonlyMap<string, Gender> = new Map(
   NAMES.map((entry) => [entry.name, entry.gender])
 );
 
+export const COUNTS_BY_NAME: ReadonlyMap<string, Pick<Name, 'boyCount' | 'girlCount'>> = new Map(
+  NAMES.map((entry) => [entry.name, { boyCount: entry.boyCount, girlCount: entry.girlCount }])
+);
+
 // The gender a new review should default to: the active gender filter when
 // it's a specific one, or the name's own default gender when the filter is
 // 'both' (e.g. filtering everyone, a boy-only name still defaults to "boy").

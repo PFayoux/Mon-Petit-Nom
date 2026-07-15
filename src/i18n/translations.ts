@@ -30,6 +30,7 @@ export type Translations = {
     remainingCount: (count: number) => string;
     emptyTitle: string;
     emptySubtitle: string;
+    popularityLabel: (boyCount: number, girlCount: number) => string;
   };
   results: {
     lovedSection: string;
@@ -81,6 +82,8 @@ const en: Translations = {
     remainingCount: (count) => `${count} name${count === 1 ? '' : 's'} left`,
     emptyTitle: "You've reviewed every name!",
     emptySubtitle: 'Check the Results tab to see how you did.',
+    popularityLabel: (boyCount, girlCount) =>
+      `${boyCount} boy${boyCount === 1 ? '' : 's'}, ${girlCount} girl${girlCount === 1 ? '' : 's'}`,
   },
   results: {
     lovedSection: 'Loved',
@@ -132,6 +135,8 @@ const fr: Translations = {
     remainingCount: (count) => `${count} prénom${count === 1 ? '' : 's'} restant${count === 1 ? '' : 's'}`,
     emptyTitle: 'Tu as passé en revue tous les prénoms !',
     emptySubtitle: "Rends-toi dans l'onglet Résultats pour voir le bilan.",
+    popularityLabel: (boyCount, girlCount) =>
+      `${boyCount} garçon${boyCount === 1 ? '' : 's'}, ${girlCount} fille${girlCount === 1 ? '' : 's'}`,
   },
   results: {
     lovedSection: 'Adorés',
