@@ -19,7 +19,11 @@ type SegmentedTabBarProps<Key extends string> = {
 
 export function SegmentedTabBar<Key extends string>({ sections, selected, onSelect }: SegmentedTabBarProps<Key>) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView
+      style={styles.scrollView}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.row}>
       {sections.map(({ key, label, count }) => {
         const isSelected = key === selected;
         return (
@@ -40,6 +44,13 @@ export function SegmentedTabBar<Key extends string>({ sections, selected, onSele
 }
 
 const styles = StyleSheet.create({
+  // Without this, react-native-web's ScrollView defaults to flexGrow: 1 and
+  // steals vertical space from flex:1 siblings (e.g. the Swipe deck) instead
+  // of sizing to its single row of pills.
+  scrollView: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   row: {
     gap: Spacing.two,
   },
