@@ -18,6 +18,7 @@ export type Translations = {
   tabs: {
     swipe: string;
     results: string;
+    settings: string;
   };
   swipe: {
     backButton: string;
@@ -31,7 +32,9 @@ export type Translations = {
     dislikedSection: string;
     unmarkedSection: string;
     emptySection: string;
-    settingsTitle: string;
+  };
+  settings: {
+    title: string;
     displayNameLabel: string;
     resetButton: string;
     resetConfirmTitle: string;
@@ -59,6 +62,7 @@ const en: Translations = {
   tabs: {
     swipe: 'Swipe',
     results: 'Results',
+    settings: 'Settings',
   },
   swipe: {
     backButton: 'Back',
@@ -72,7 +76,9 @@ const en: Translations = {
     dislikedSection: 'Disliked',
     unmarkedSection: 'Unmarked',
     emptySection: 'No names here yet',
-    settingsTitle: 'Settings',
+  },
+  settings: {
+    title: 'Settings',
     displayNameLabel: 'Your name',
     resetButton: 'Reset all answers',
     resetConfirmTitle: 'Reset all answers?',
@@ -100,6 +106,7 @@ const fr: Translations = {
   tabs: {
     swipe: 'Swipe',
     results: 'Résultats',
+    settings: 'Réglages',
   },
   swipe: {
     backButton: 'Retour',
@@ -113,7 +120,9 @@ const fr: Translations = {
     dislikedSection: 'Pas aimés',
     unmarkedSection: 'Non classés',
     emptySection: 'Aucun prénom ici pour le moment',
-    settingsTitle: 'Réglages',
+  },
+  settings: {
+    title: 'Réglages',
     displayNameLabel: 'Ton prénom',
     resetButton: 'Réinitialiser les réponses',
     resetConfirmTitle: 'Réinitialiser toutes les réponses ?',
