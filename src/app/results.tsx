@@ -1,13 +1,14 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
+import { FlatList, ListRenderItemInfo, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
+import { GenderPicker } from '@/components/gender-picker';
 import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { GENDER_BY_NAME, getDefaultReviewGender, getNamesForGender } from '@/data/names';
+import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesGenderFilter } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
@@ -30,11 +31,25 @@ const ROW_HEIGHT = 36;
 const ROW_GAP = Spacing.three;
 const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
 
-function groupNamesByStatus(reviews: ReviewMap, names: readonly { name: string }[]): NamesBySection {
+// Once a name has a love/maybe review, the gender the user chose for it
+// (`review.gender`) decides which gender tab it shows up in — not the name's
+// default gender. Dislike and unmarked names have no chosen gender, so they
+// keep filtering on the name's default gender (see CONTEXT.md's "Genre choisi").
+function groupNamesByStatus(
+  reviews: ReviewMap,
+  names: readonly { name: string; gender: Gender }[],
+  selectedGender: Gender
+): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
-  for (const { name } of names) {
-    const status = reviews[name]?.status;
-    groups[status ?? 'unmarked'].push(name);
+  for (const { name, gender: defaultGender } of names) {
+    const review = reviews[name];
+    if (review?.status === 'love' || review?.status === 'maybe') {
+      if (matchesGenderFilter(review.gender, selectedGender)) {
+        groups[review.status].push(name);
+      }
+    } else if (matchesGenderFilter(defaultGender, selectedGender)) {
+      groups[review?.status ?? 'unmarked'].push(name);
+    }
   }
   for (const names of Object.values(groups)) {
     names.sort((a, b) => a.localeCompare(b));
@@ -46,15 +61,30 @@ const NameReviewRow = memo(function NameReviewRow({
   name,
   status,
   onSelect,
+  onEditGender,
 }: {
   name: string;
   status?: ReviewStatus;
   onSelect: (name: string, status: ReviewStatus) => void;
+  onEditGender: (name: string) => void;
 }) {
+  const t = useTranslation();
+  const canEditGender = status === 'love' || status === 'maybe';
+
   return (
     <View style={styles.row}>
       <ThemedText style={styles.rowName}>{name}</ThemedText>
-      <DecisionButtons size="compact" selectedStatus={status} onSelect={(status) => onSelect(name, status)} />
+      <View style={styles.rowActions}>
+        <DecisionButtons size="compact" selectedStatus={status} onSelect={(status) => onSelect(name, status)} />
+        {canEditGender && (
+          <Pressable
+            accessibilityLabel={t.results.editGenderButton(name)}
+            onPress={() => onEditGender(name)}
+            style={({ pressed }) => [styles.editGenderButton, pressed && styles.pressed]}>
+            <ThemedText type="subtitle">⋮</ThemedText>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 });
@@ -67,9 +97,9 @@ export default function ResultsScreen() {
 
   const [selectedGender, setSelectedGender] = useState<Gender>('both');
   const [selectedStatus, setSelectedStatus] = useState<StatusSectionKey>('love');
+  const [editingGenderName, setEditingGenderName] = useState<string | null>(null);
 
-  const genderNames = useMemo(() => getNamesForGender(selectedGender), [selectedGender]);
-  const groups = useMemo(() => groupNamesByStatus(reviews, genderNames), [reviews, genderNames]);
+  const groups = useMemo(() => groupNamesByStatus(reviews, NAMES, selectedGender), [reviews, selectedGender]);
 
   const genderSections: { key: Gender; label: string }[] = [
     { key: 'boy', label: t.gender.boy },
@@ -88,17 +118,40 @@ export default function ResultsScreen() {
 
   const handleRowSelect = useCallback(
     (name: string, status: ReviewStatus) => {
-      const gender = getDefaultReviewGender(selectedGender, GENDER_BY_NAME.get(name)!);
+      // Changing status alone keeps a name's already-chosen gender — only the
+      // "⋮" menu is meant to change it (CONTEXT.md's "Genre choisi"). A brand
+      // new review falls back to the current gender tab's default.
+      const gender = reviews[name]?.gender ?? getDefaultReviewGender(selectedGender, GENDER_BY_NAME.get(name)!);
       setReview(name, status, gender);
     },
-    [selectedGender, setReview]
+    [reviews, selectedGender, setReview]
+  );
+
+  const handleEditGender = useCallback((name: string) => {
+    setEditingGenderName(name);
+  }, []);
+
+  const handleGenderCorrection = useCallback(
+    (gender: Gender) => {
+      if (!editingGenderName) return;
+      const status = reviews[editingGenderName]?.status;
+      if (!status) return;
+      setReview(editingGenderName, status, gender);
+      setEditingGenderName(null);
+    },
+    [editingGenderName, reviews, setReview]
   );
 
   const renderItem = useCallback(
     ({ item: name }: ListRenderItemInfo<string>) => (
-      <NameReviewRow name={name} status={reviews[name]?.status} onSelect={handleRowSelect} />
+      <NameReviewRow
+        name={name}
+        status={reviews[name]?.status}
+        onSelect={handleRowSelect}
+        onEditGender={handleEditGender}
+      />
     ),
-    [reviews, handleRowSelect]
+    [reviews, handleRowSelect, handleEditGender]
   );
 
   const getItemLayout = useCallback(
@@ -141,6 +194,34 @@ export default function ResultsScreen() {
           </ThemedText>
         }
       />
+
+      <Modal
+        visible={editingGenderName !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingGenderName(null)}>
+        <Pressable
+          style={styles.modalOverlay}
+          accessibilityLabel={t.common.cancel}
+          onPress={() => setEditingGenderName(null)}>
+          <Pressable style={styles.modalCardWrapper} onPress={() => {}}>
+            <ThemedView testID="genderCorrectionModal" type="surface" style={styles.modalCard}>
+              <ThemedText type="subtitle" style={styles.centerText}>
+                {editingGenderName}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary" type="small" style={styles.centerText}>
+                {t.results.editGenderModalTitle}
+              </ThemedText>
+              {editingGenderName && (
+                <GenderPicker
+                  selected={reviews[editingGenderName]?.gender ?? 'both'}
+                  onSelect={handleGenderCorrection}
+                />
+              )}
+            </ThemedView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ThemedView>
   );
 }
@@ -187,5 +268,38 @@ const styles = StyleSheet.create({
   },
   rowName: {
     flexShrink: 1,
+  },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  editGenderButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    padding: Spacing.four,
+  },
+  modalCardWrapper: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  modalCard: {
+    borderRadius: Spacing.four,
+    padding: Spacing.five,
+    gap: Spacing.three,
+  },
+  centerText: {
+    textAlign: 'center',
   },
 });
