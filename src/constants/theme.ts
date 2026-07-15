@@ -15,7 +15,6 @@ export const Colors = {
     surface: '#F3DCCB',
     primary: '#E8927C',
     primaryPressed: '#B57261',
-    primaryShadow: '#8E4E3B',
     onPrimary: '#FFFFFF',
     border: '#D9C6B8',
     // Identity colors for the per-review gender picker — stable across
@@ -31,7 +30,6 @@ export const Colors = {
     surface: '#29201B',
     primary: '#E8927C',
     primaryPressed: '#F0AC98',
-    primaryShadow: '#5C332A',
     onPrimary: '#1C1512',
     border: '#3D2F27',
     genderBoy: '#8EB8E8',
