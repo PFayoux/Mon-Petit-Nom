@@ -27,6 +27,7 @@ export type Translations = {
     emptySubtitle: string;
   };
   results: {
+    genderBoy: string;
     lovedSection: string;
     maybeSection: string;
     dislikedSection: string;
@@ -71,6 +72,7 @@ const en: Translations = {
     emptySubtitle: 'Check the Results tab to see how you did.',
   },
   results: {
+    genderBoy: 'Boy',
     lovedSection: 'Loved',
     maybeSection: 'Maybe',
     dislikedSection: 'Disliked',
@@ -115,6 +117,7 @@ const fr: Translations = {
     emptySubtitle: "Rends-toi dans l'onglet Résultats pour voir le bilan.",
   },
   results: {
+    genderBoy: 'Garçon',
     lovedSection: 'Adorés',
     maybeSection: 'Peut-être',
     dislikedSection: 'Pas aimés',
