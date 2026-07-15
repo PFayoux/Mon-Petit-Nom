@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
+import { StatusTabBar } from '@/components/status-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
@@ -47,39 +48,6 @@ function NameReviewRow({
       <ThemedText style={styles.rowName}>{name}</ThemedText>
       <DecisionButtons size="compact" selectedStatus={status} onSelect={onSelect} />
     </View>
-  );
-}
-
-function StatusTabBar({
-  sections,
-  selected,
-  onSelect,
-}: {
-  sections: { key: StatusSectionKey; label: string; count: number }[];
-  selected: StatusSectionKey;
-  onSelect: (key: StatusSectionKey) => void;
-}) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.statusTabRow}>
-      {sections.map(({ key, label, count }) => {
-        const isSelected = key === selected;
-        return (
-          <Pressable
-            key={key}
-            onPress={() => onSelect(key)}
-            style={({ pressed }) => pressed && !isSelected && styles.pressed}>
-            <ThemedView type={isSelected ? 'primary' : 'surface'} style={styles.statusTab}>
-              <ThemedText type="small" themeColor={isSelected ? 'onPrimary' : 'text'}>
-                {`${label} (${count})`}
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
   );
 }
 
@@ -156,14 +124,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
   },
-  statusTabRow: {
-    gap: Spacing.two,
-  },
-  statusTab: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.five,
-  },
   scrollView: {
     flex: 1,
   },
@@ -188,8 +148,5 @@ const styles = StyleSheet.create({
   },
   rowName: {
     flexShrink: 1,
-  },
-  pressed: {
-    opacity: 0.7,
   },
 });
