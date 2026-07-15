@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { FlatList, ListRenderItemInfo, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -23,9 +23,12 @@ type NamesBySection = {
 type StatusSectionKey = keyof NamesBySection;
 
 // Matches DecisionButtons' compact button size — the tallest element in a row —
-// so FlatList's getItemLayout can compute offsets without measuring.
+// so FlatList's getItemLayout can compute offsets without measuring. The gap
+// between rows is baked into ROW_SLOT_HEIGHT (via row's marginBottom) so every
+// slot, including the last, has the same, easy-to-offset height.
 const ROW_HEIGHT = 36;
-const SEPARATOR_HEIGHT = Spacing.three;
+const ROW_GAP = Spacing.three;
+const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
 
 function groupNamesByStatus(reviews: ReviewMap): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
@@ -39,22 +42,22 @@ function groupNamesByStatus(reviews: ReviewMap): NamesBySection {
   return groups;
 }
 
-function NameReviewRow({
+const NameReviewRow = memo(function NameReviewRow({
   name,
   status,
   onSelect,
 }: {
   name: string;
   status?: ReviewStatus;
-  onSelect: (status: ReviewStatus) => void;
+  onSelect: (name: string, status: ReviewStatus) => void;
 }) {
   return (
     <View style={styles.row}>
       <ThemedText style={styles.rowName}>{name}</ThemedText>
-      <DecisionButtons size="compact" selectedStatus={status} onSelect={onSelect} />
+      <DecisionButtons size="compact" selectedStatus={status} onSelect={(status) => onSelect(name, status)} />
     </View>
   );
-}
+});
 
 export default function ResultsScreen() {
   const { reviews, setReview } = useAppStore();
@@ -75,6 +78,22 @@ export default function ResultsScreen() {
 
   const selectedNames = groups[selectedStatus];
 
+  const renderItem = useCallback(
+    ({ item: name }: ListRenderItemInfo<string>) => (
+      <NameReviewRow name={name} status={reviews[name]} onSelect={setReview} />
+    ),
+    [reviews, setReview]
+  );
+
+  const getItemLayout = useCallback(
+    (_: ArrayLike<string> | null | undefined, index: number) => ({
+      length: ROW_SLOT_HEIGHT,
+      offset: ROW_SLOT_HEIGHT * index,
+      index,
+    }),
+    []
+  );
+
   return (
     <ThemedView style={[styles.screen, { backgroundColor: theme.background }]}>
       <View
@@ -93,16 +112,11 @@ export default function ResultsScreen() {
         style={styles.list}
         contentContainerStyle={styles.listContent}
         data={selectedNames}
-        keyExtractor={(name) => name}
-        renderItem={({ item: name }) => (
-          <NameReviewRow name={name} status={reviews[name]} onSelect={(status) => setReview(name, status)} />
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        getItemLayout={(_, index) => ({
-          length: ROW_HEIGHT,
-          offset: (ROW_HEIGHT + SEPARATOR_HEIGHT) * index,
-          index,
-        })}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        initialNumToRender={16}
+        windowSize={7}
         ListEmptyComponent={
           <ThemedText themeColor="textSecondary" type="small">
             {t.results.emptySection}
@@ -111,6 +125,10 @@ export default function ResultsScreen() {
       />
     </ThemedView>
   );
+}
+
+function keyExtractor(name: string) {
+  return name;
 }
 
 const styles = StyleSheet.create({
@@ -138,11 +156,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.six,
   },
-  separator: {
-    height: SEPARATOR_HEIGHT,
-  },
   row: {
     height: ROW_HEIGHT,
+    marginBottom: ROW_GAP,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
