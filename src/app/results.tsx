@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -21,6 +21,11 @@ type NamesBySection = {
 };
 
 type StatusSectionKey = keyof NamesBySection;
+
+// Matches DecisionButtons' compact button size — the tallest element in a row —
+// so FlatList's getItemLayout can compute offsets without measuring.
+const ROW_HEIGHT = 36;
+const SEPARATOR_HEIGHT = Spacing.three;
 
 function groupNamesByStatus(reviews: ReviewMap): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
@@ -84,28 +89,26 @@ export default function ResultsScreen() {
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}>
-        <ThemedView style={styles.container}>
-          {selectedNames.length === 0 ? (
-            <ThemedText themeColor="textSecondary" type="small">
-              {t.results.emptySection}
-            </ThemedText>
-          ) : (
-            <View style={styles.rowList}>
-              {selectedNames.map((name) => (
-                <NameReviewRow
-                  key={name}
-                  name={name}
-                  status={reviews[name]}
-                  onSelect={(status) => setReview(name, status)}
-                />
-              ))}
-            </View>
-          )}
-        </ThemedView>
-      </ScrollView>
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        data={selectedNames}
+        keyExtractor={(name) => name}
+        renderItem={({ item: name }) => (
+          <NameReviewRow name={name} status={reviews[name]} onSelect={(status) => setReview(name, status)} />
+        )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        getItemLayout={(_, index) => ({
+          length: ROW_HEIGHT,
+          offset: (ROW_HEIGHT + SEPARATOR_HEIGHT) * index,
+          index,
+        })}
+        ListEmptyComponent={
+          <ThemedText themeColor="textSecondary" type="small">
+            {t.results.emptySection}
+          </ThemedText>
+        }
+      />
     </ThemedView>
   );
 }
@@ -124,23 +127,22 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
   },
-  scrollView: {
+  list: {
     flex: 1,
   },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingBottom: Spacing.six,
-  },
-  container: {
+  listContent: {
     maxWidth: MaxContentWidth,
+    width: '100%',
+    alignSelf: 'center',
     flexGrow: 1,
     paddingHorizontal: Spacing.four,
+    paddingBottom: Spacing.six,
   },
-  rowList: {
-    gap: Spacing.three,
+  separator: {
+    height: SEPARATOR_HEIGHT,
   },
   row: {
+    height: ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
