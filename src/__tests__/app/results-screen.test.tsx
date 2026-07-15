@@ -1,11 +1,12 @@
-import { screen, userEvent } from '@testing-library/react-native';
+import { screen, userEvent, within } from '@testing-library/react-native';
 
 import ResultsScreen from '@/app/results';
 import { NAMES } from '@/data/names';
-import { renderScreen, seedAppStore } from '@/lib/test-utils';
+import { getStoredReviews, renderScreen, seedAppStore } from '@/lib/test-utils';
 
-// Aaron is boy-only, Camille is tagged 'both' in the dataset — see src/data/names.ts.
+// Aaron is boy-only, Ada is girl-only, Camille is tagged 'both' — see src/data/names.ts.
 const BOY_ONLY_NAME = 'Aaron';
+const GIRL_ONLY_NAME = 'Ada';
 const BOTH_GENDER_NAME = 'Camille';
 
 describe('ResultsScreen', () => {
@@ -60,5 +61,101 @@ describe('ResultsScreen', () => {
 
     expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
     expect(screen.getByText('Disliked (1)')).toBeOnTheScreen();
+  });
+
+  describe('filtering by the chosen review gender', () => {
+    test('Given a girl-only name loved for "boy" specifically, When the user filters by "Girl", Then it does not appear in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [GIRL_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Girl'));
+
+      expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+      expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given a girl-only name loved for "boy" specifically, When the user filters by "Boy", Then it appears in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [GIRL_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Boy'));
+
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(GIRL_ONLY_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given a boy-only name loved for "both" specifically, When the user filters by "Girl", Then it still appears in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'both' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Girl'));
+
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given a name already loved with a chosen gender, When the user presses a different status on its row, Then the chosen gender is kept, not reset to the filter default', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [GIRL_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText('Boy'));
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByLabelText('Maybe'));
+
+      expect(await getStoredReviews()).toEqual({ [GIRL_ONLY_NAME]: { status: 'maybe', gender: 'boy' } });
+    });
+  });
+
+  describe('correcting a review\'s gender from the "⋮" menu', () => {
+    test('Given a loved name, Then its row has an edit-gender button', async () => {
+      await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: { status: 'love', gender: 'both' } } });
+      await renderScreen(<ResultsScreen />);
+
+      expect(await screen.findByLabelText(`Edit gender for ${BOTH_GENDER_NAME}`)).toBeOnTheScreen();
+    });
+
+    test('Given an unmarked name, Then its row has no edit-gender button', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await screen.findByText(BOY_ONLY_NAME);
+
+      expect(screen.queryByLabelText(`Edit gender for ${BOY_ONLY_NAME}`)).not.toBeOnTheScreen();
+    });
+
+    test('Given the user opens the menu and picks a new gender, Then the stored review is updated to that gender while its status stays the same', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [GIRL_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText(GIRL_ONLY_NAME);
+
+      await user.press(screen.getByLabelText(`Edit gender for ${GIRL_ONLY_NAME}`));
+      const modal = within(screen.getByTestId('genderCorrectionModal'));
+      await user.press(modal.getByLabelText('Girl'));
+
+      expect(await getStoredReviews()).toEqual({ [GIRL_ONLY_NAME]: { status: 'love', gender: 'girl' } });
+    });
+
+    test('Given the user corrects a name\'s gender to no longer match the active filter, When the modal closes, Then the row disappears from the current tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [GIRL_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText('Boy'));
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByLabelText(`Edit gender for ${GIRL_ONLY_NAME}`));
+      const modal = within(screen.getByTestId('genderCorrectionModal'));
+      await user.press(modal.getByLabelText('Girl'));
+
+      expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+      expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
   });
 });

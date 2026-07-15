@@ -37,6 +37,8 @@ export type Translations = {
     dislikedSection: string;
     unmarkedSection: string;
     emptySection: string;
+    editGenderButton: (name: string) => string;
+    editGenderModalTitle: string;
   };
   settings: {
     title: string;
@@ -86,6 +88,8 @@ const en: Translations = {
     dislikedSection: 'Disliked',
     unmarkedSection: 'Unmarked',
     emptySection: 'No names here yet',
+    editGenderButton: (name) => `Edit gender for ${name}`,
+    editGenderModalTitle: 'Choose a gender for this name',
   },
   settings: {
     title: 'Settings',
@@ -135,6 +139,8 @@ const fr: Translations = {
     dislikedSection: 'Pas aimés',
     unmarkedSection: 'Non classés',
     emptySection: 'Aucun prénom ici pour le moment',
+    editGenderButton: (name) => `Modifier le genre de ${name}`,
+    editGenderModalTitle: 'Choisis un genre pour ce prénom',
   },
   settings: {
     title: 'Réglages',
