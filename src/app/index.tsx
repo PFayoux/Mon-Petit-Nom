@@ -4,14 +4,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
 import { NameCard } from '@/components/name-card';
+import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { BOY_NAMES } from '@/data/boy-names';
+import { NAMES, matchesGenderFilter } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTranslation } from '@/i18n/use-translation';
 import { shuffle } from '@/lib/shuffle';
-import type { ReviewStatus } from '@/types/name';
+import type { Gender, ReviewStatus } from '@/types/name';
+
+const ALL_NAME_STRINGS = NAMES.map((entry) => entry.name);
+const GENDER_BY_NAME = new Map(NAMES.map((entry) => [entry.name, entry.gender]));
 
 // The name card keeps a portrait 3:4 (width:height) shape, but is sized to the
 // space actually available on screen so it shrinks instead of getting cropped
@@ -24,13 +28,23 @@ export default function SwipeScreen() {
   const t = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const [order, setOrder] = useState<string[]>(() => shuffle(BOY_NAMES));
+  const [order, setOrder] = useState<string[]>(() => shuffle(ALL_NAME_STRINGS));
+  const [selectedGender, setSelectedGender] = useState<Gender>('both');
   const [history, setHistory] = useState<string[]>([]);
   const [deckSize, setDeckSize] = useState({ width: 0, height: 0 });
 
+  const genderSections: { key: Gender; label: string }[] = [
+    { key: 'boy', label: t.gender.boy },
+    { key: 'girl', label: t.gender.girl },
+    { key: 'both', label: t.gender.both },
+  ];
+
   const remaining = useMemo(
-    () => order.filter((name) => !(name in reviews)),
-    [order, reviews]
+    () =>
+      order.filter(
+        (name) => !(name in reviews) && matchesGenderFilter(GENDER_BY_NAME.get(name)!, selectedGender)
+      ),
+    [order, reviews, selectedGender]
   );
   const currentName = remaining[0];
 
@@ -77,6 +91,8 @@ export default function SwipeScreen() {
             paddingBottom: Spacing.three,
           },
         ]}>
+        <SegmentedTabBar sections={genderSections} selected={selectedGender} onSelect={setSelectedGender} />
+
         <ThemedText type="small" themeColor="textSecondary" style={styles.remainingCount}>
           {t.swipe.remainingCount(remaining.length)}
         </ThemedText>
