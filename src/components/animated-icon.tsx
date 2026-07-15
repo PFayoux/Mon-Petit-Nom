@@ -21,12 +21,6 @@ const BASE_TITLE = 72;
 const BASE_LETTER_SPACING = 3;
 const BASE_BORDER = 8;
 
-const TEXT_LAYERS = [
-  { offset: { x: 4, y: 7 }, color: Colors.light.primaryShadow },
-  { offset: { x: 2, y: 3 }, color: Colors.light.primaryShadow },
-  { offset: { x: 0, y: 0 }, color: Colors.light.primaryPressed },
-];
-
 function LogoMark() {
   const { width } = useWindowDimensions();
   // Fill (almost) the full screen width, capped so it doesn't get absurd on tablets.
@@ -46,43 +40,31 @@ function LogoMark() {
           },
         ]}
       />
-      {TEXT_LAYERS.map((layer, index) => (
-          <View
-            key={index}
-            style={[
-              styles.textLayer,
-              {
-                transform: [
-                  { translateX: layer.offset.x * scale },
-                  { translateY: layer.offset.y * scale },
-                ],
-              },
-            ]}>
-            <Text
-              style={[
-                styles.kicker,
-                {
-                  color: layer.color,
-                  fontSize: BASE_KICKER * scale,
-                  letterSpacing: BASE_LETTER_SPACING * scale,
-                },
-              ]}>
-              Mon petit
-            </Text>
-            <Text
-              style={[
-                styles.title,
-                {
-                  color: layer.color,
-                  fontSize: BASE_TITLE * scale,
-                  lineHeight: BASE_TITLE * scale,
-                  marginTop: -2 * scale,
-                },
-              ]}>
-              nom
-            </Text>
-          </View>
-        ))}
+      <View style={styles.textLayer}>
+        <Text
+          style={[
+            styles.kicker,
+            {
+              color: Colors.light.primaryPressed,
+              fontSize: BASE_KICKER * scale,
+              letterSpacing: BASE_LETTER_SPACING * scale,
+            },
+          ]}>
+          Mon petit
+        </Text>
+        <Text
+          style={[
+            styles.title,
+            {
+              color: Colors.light.primaryPressed,
+              fontSize: BASE_TITLE * scale,
+              lineHeight: BASE_TITLE * scale,
+              marginTop: -2 * scale,
+            },
+          ]}>
+          nom
+        </Text>
+      </View>
     </View>
   );
 }
