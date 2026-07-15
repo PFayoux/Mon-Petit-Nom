@@ -34,6 +34,14 @@ export default function AppTabs() {
           md={{ default: 'format_list_bulleted', selected: 'format_list_bulleted' }}
         />
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="settings">
+        <NativeTabs.Trigger.Label>{t.tabs.settings}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'gearshape', selected: 'gearshape.fill' }}
+          md={{ default: 'settings', selected: 'settings' }}
+        />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

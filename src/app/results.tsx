@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -50,12 +50,10 @@ function NameReviewRow({
 }
 
 export default function ResultsScreen() {
-  const { displayName, reviews, setReview, setDisplayName, resetAllReviews } = useAppStore();
+  const { reviews, setReview } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-
-  const [nameDraft, setNameDraft] = useState(displayName ?? '');
 
   const groups = useMemo(() => groupNamesByStatus(reviews), [reviews]);
 
@@ -65,27 +63,6 @@ export default function ResultsScreen() {
     { key: 'dislike', label: t.results.dislikedSection },
     { key: 'unmarked', label: t.results.unmarkedSection },
   ];
-
-  function handleSaveDisplayName() {
-    const trimmed = nameDraft.trim();
-    if (trimmed) {
-      setDisplayName(trimmed);
-    }
-  }
-
-  function handleResetPress() {
-    // Alert.alert() is a no-op on react-native-web, so the web build needs its own confirm path.
-    if (Platform.OS === 'web') {
-      if (window.confirm(`${t.results.resetConfirmTitle}\n\n${t.results.resetConfirmMessage}`)) {
-        resetAllReviews();
-      }
-      return;
-    }
-    Alert.alert(t.results.resetConfirmTitle, t.results.resetConfirmMessage, [
-      { text: t.common.cancel, style: 'cancel' },
-      { text: t.results.resetButton, style: 'destructive', onPress: resetAllReviews },
-    ]);
-  }
 
   return (
     <ScrollView
@@ -120,35 +97,6 @@ export default function ResultsScreen() {
             </Collapsible>
           );
         })}
-
-        <ThemedView type="surface" style={styles.settings}>
-          <ThemedText type="smallBold">{t.results.settingsTitle}</ThemedText>
-
-          <View style={styles.settingsRow}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t.results.displayNameLabel}
-            </ThemedText>
-            <TextInput
-              value={nameDraft}
-              onChangeText={setNameDraft}
-              onSubmitEditing={handleSaveDisplayName}
-              onBlur={handleSaveDisplayName}
-              returnKeyType="done"
-              style={[
-                styles.input,
-                { color: theme.text, backgroundColor: theme.background, borderColor: theme.border },
-              ]}
-            />
-          </View>
-
-          <Pressable
-            onPress={handleResetPress}
-            style={({ pressed }) => [styles.resetButton, pressed && styles.pressed]}>
-            <ThemedText type="link" themeColor="text">
-              {t.results.resetButton}
-            </ThemedText>
-          </Pressable>
-        </ThemedView>
       </ThemedView>
     </ScrollView>
   );
@@ -179,26 +127,5 @@ const styles = StyleSheet.create({
   },
   rowName: {
     flexShrink: 1,
-  },
-  settings: {
-    borderRadius: Spacing.four,
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  settingsRow: {
-    gap: Spacing.one,
-  },
-  input: {
-    borderRadius: Spacing.two,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    fontSize: 16,
-  },
-  resetButton: {
-    alignSelf: 'flex-start',
-  },
-  pressed: {
-    opacity: 0.7,
   },
 });
