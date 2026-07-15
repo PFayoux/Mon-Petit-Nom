@@ -1,7 +1,7 @@
 import { fireEvent, screen, userEvent } from '@testing-library/react-native';
 
 import SwipeScreen from '@/app/index';
-import { renderScreen } from '@/lib/test-utils';
+import { getStoredReviews, renderScreen } from '@/lib/test-utils';
 
 // The deck's card size only appears once the deck View reports a real layout,
 // which never happens on its own in the test renderer (no real measurement).
@@ -60,5 +60,68 @@ describe('SwipeScreen', () => {
     await user.press(screen.getByText('Girl'));
 
     expect(await screen.findByText('Camille')).toBeOnTheScreen();
+  });
+
+  describe('review gender picker', () => {
+    test('Given the deck filter is "Boy", When a card is shown, Then the gender picker defaults to "Boy"', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<SwipeScreen />);
+      await layOutDeck();
+      await screen.findByText('Aaron');
+
+      await user.press(screen.getByText('Boy'));
+
+      expect(screen.getByLabelText('Boy').props.accessibilityState.selected).toBe(true);
+      expect(screen.getByLabelText('Girl').props.accessibilityState.selected).toBe(false);
+    });
+
+    test('Given no gender override, When the user presses Love, Then the saved review uses the picker\'s default gender', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<SwipeScreen />);
+      await layOutDeck();
+      await screen.findByText('Aaron');
+
+      await user.press(screen.getByLabelText('Love'));
+
+      expect(await getStoredReviews()).toEqual({ Aaron: { status: 'love', gender: 'boy' } });
+    });
+
+    test('Given the user manually picks "Girl" on a boy-only name, When they press Love, Then the saved review uses "Girl" instead of the default', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<SwipeScreen />);
+      await layOutDeck();
+      await screen.findByText('Aaron');
+
+      await user.press(screen.getByLabelText('Girl'));
+      await user.press(screen.getByLabelText('Love'));
+
+      expect(await getStoredReviews()).toEqual({ Aaron: { status: 'love', gender: 'girl' } });
+    });
+
+    test('Given the user picked a specific gender, When they press Dislike, Then the saved review always uses "both"', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<SwipeScreen />);
+      await layOutDeck();
+      await screen.findByText('Aaron');
+
+      await user.press(screen.getByLabelText('Girl'));
+      await user.press(screen.getByLabelText('Dislike'));
+
+      expect(await getStoredReviews()).toEqual({ Aaron: { status: 'dislike', gender: 'both' } });
+    });
+
+    test('Given a manual gender override on one card, When the next card appears, Then its picker resets to that card\'s own default', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<SwipeScreen />);
+      await layOutDeck();
+      await screen.findByText('Aaron');
+
+      await user.press(screen.getByLabelText('Girl'));
+      await user.press(screen.getByLabelText('Love'));
+      await screen.findByText('Abel');
+
+      expect(screen.getByLabelText('Boy').props.accessibilityState.selected).toBe(true);
+      expect(screen.getByLabelText('Girl').props.accessibilityState.selected).toBe(false);
+    });
   });
 });

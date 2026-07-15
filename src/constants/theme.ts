@@ -18,6 +18,11 @@ export const Colors = {
     primaryShadow: '#8E4E3B',
     onPrimary: '#FFFFFF',
     border: '#D9C6B8',
+    // Identity colors for the per-review gender picker — stable across
+    // themes, like `primary`, so the same gender always reads the same way.
+    genderBoy: '#8EB8E8',
+    genderGirl: '#E88EB4',
+    genderBoth: '#C08EE8',
   },
   dark: {
     text: '#F3E7DE',
@@ -29,6 +34,9 @@ export const Colors = {
     primaryShadow: '#5C332A',
     onPrimary: '#1C1512',
     border: '#3D2F27',
+    genderBoy: '#8EB8E8',
+    genderGirl: '#E88EB4',
+    genderBoth: '#C08EE8',
   },
 } as const;
 

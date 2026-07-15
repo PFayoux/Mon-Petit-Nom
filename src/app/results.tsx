@@ -7,7 +7,7 @@ import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { getNamesForGender } from '@/data/names';
+import { GENDER_BY_NAME, getDefaultReviewGender, getNamesForGender } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
@@ -33,7 +33,7 @@ const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
 function groupNamesByStatus(reviews: ReviewMap, names: readonly { name: string }[]): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
   for (const { name } of names) {
-    const status = reviews[name];
+    const status = reviews[name]?.status;
     groups[status ?? 'unmarked'].push(name);
   }
   for (const names of Object.values(groups)) {
@@ -86,11 +86,19 @@ export default function ResultsScreen() {
 
   const selectedNames = groups[selectedStatus];
 
+  const handleRowSelect = useCallback(
+    (name: string, status: ReviewStatus) => {
+      const gender = getDefaultReviewGender(selectedGender, GENDER_BY_NAME.get(name)!);
+      setReview(name, status, gender);
+    },
+    [selectedGender, setReview]
+  );
+
   const renderItem = useCallback(
     ({ item: name }: ListRenderItemInfo<string>) => (
-      <NameReviewRow name={name} status={reviews[name]} onSelect={setReview} />
+      <NameReviewRow name={name} status={reviews[name]?.status} onSelect={handleRowSelect} />
     ),
-    [reviews, setReview]
+    [reviews, handleRowSelect]
   );
 
   const getItemLayout = useCallback(

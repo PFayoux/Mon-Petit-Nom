@@ -19,7 +19,7 @@ describe('ResultsScreen', () => {
   });
 
   test('Given a boy-only name marked as loved, When the screen renders with the default "Both" gender filter, Then it appears in the Loved tab', async () => {
-    await seedAppStore({ reviews: { [BOY_ONLY_NAME]: 'love' } });
+    await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
     await renderScreen(<ResultsScreen />);
 
     expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
@@ -28,7 +28,7 @@ describe('ResultsScreen', () => {
 
   test('Given a boy-only name marked as loved, When the user filters by "Girl", Then it no longer appears in the Loved tab', async () => {
     const user = userEvent.setup();
-    await seedAppStore({ reviews: { [BOY_ONLY_NAME]: 'love' } });
+    await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
     await renderScreen(<ResultsScreen />);
     await screen.findByText('Loved (1)');
 
@@ -40,7 +40,7 @@ describe('ResultsScreen', () => {
 
   test('Given a name tagged "both", When the user filters by "Girl", Then it still appears in the Loved tab', async () => {
     const user = userEvent.setup();
-    await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: 'love' } });
+    await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: { status: 'love', gender: 'both' } } });
     await renderScreen(<ResultsScreen />);
     await screen.findByText('Loved (1)');
 
@@ -52,7 +52,7 @@ describe('ResultsScreen', () => {
 
   test('Given a name shown in the Loved tab, When the user presses its dislike button, Then it moves to the Disliked tab', async () => {
     const user = userEvent.setup();
-    await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: 'love' } });
+    await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: { status: 'love', gender: 'both' } } });
     await renderScreen(<ResultsScreen />);
     await screen.findByText('Loved (1)');
 

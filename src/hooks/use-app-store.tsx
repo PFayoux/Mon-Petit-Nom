@@ -9,14 +9,14 @@ import {
 } from 'react';
 
 import { loadDisplayName, loadReviews, saveDisplayName, saveReviews } from '@/lib/storage';
-import type { ReviewMap, ReviewStatus } from '@/types/name';
+import type { Gender, ReviewMap, ReviewStatus } from '@/types/name';
 
 type AppStore = {
   isHydrated: boolean;
   displayName: string | null;
   reviews: ReviewMap;
   setDisplayName: (name: string) => void;
-  setReview: (name: string, status: ReviewStatus) => void;
+  setReview: (name: string, status: ReviewStatus, gender: Gender) => void;
   clearReview: (name: string) => void;
   resetAllReviews: () => void;
 };
@@ -41,9 +41,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     saveDisplayName(name);
   }, []);
 
-  const setReview = useCallback((name: string, status: ReviewStatus) => {
+  const setReview = useCallback((name: string, status: ReviewStatus, gender: Gender) => {
     setReviews((current) => {
-      const next = { ...current, [name]: status };
+      // A dislike is universal — never tied to a specific gender — regardless
+      // of whatever gender was selected when the decision was made.
+      const next = { ...current, [name]: { status, gender: status === 'dislike' ? 'both' : gender } };
       saveReviews(next);
       return next;
     });
