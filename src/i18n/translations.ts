@@ -20,6 +20,11 @@ export type Translations = {
     results: string;
     settings: string;
   };
+  gender: {
+    boy: string;
+    girl: string;
+    both: string;
+  };
   swipe: {
     backButton: string;
     remainingCount: (count: number) => string;
@@ -27,7 +32,6 @@ export type Translations = {
     emptySubtitle: string;
   };
   results: {
-    genderBoy: string;
     lovedSection: string;
     maybeSection: string;
     dislikedSection: string;
@@ -65,6 +69,11 @@ const en: Translations = {
     results: 'Results',
     settings: 'Settings',
   },
+  gender: {
+    boy: 'Boy',
+    girl: 'Girl',
+    both: 'Both',
+  },
   swipe: {
     backButton: 'Back',
     remainingCount: (count) => `${count} name${count === 1 ? '' : 's'} left`,
@@ -72,7 +81,6 @@ const en: Translations = {
     emptySubtitle: 'Check the Results tab to see how you did.',
   },
   results: {
-    genderBoy: 'Boy',
     lovedSection: 'Loved',
     maybeSection: 'Maybe',
     dislikedSection: 'Disliked',
@@ -110,6 +118,11 @@ const fr: Translations = {
     results: 'Résultats',
     settings: 'Réglages',
   },
+  gender: {
+    boy: 'Garçon',
+    girl: 'Fille',
+    both: 'Les deux',
+  },
   swipe: {
     backButton: 'Retour',
     remainingCount: (count) => `${count} prénom${count === 1 ? '' : 's'} restant${count === 1 ? '' : 's'}`,
@@ -117,7 +130,6 @@ const fr: Translations = {
     emptySubtitle: "Rends-toi dans l'onglet Résultats pour voir le bilan.",
   },
   results: {
-    genderBoy: 'Garçon',
     lovedSection: 'Adorés',
     maybeSection: 'Peut-être',
     dislikedSection: 'Pas aimés',
