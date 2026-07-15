@@ -9,7 +9,7 @@ import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesGenderFilter } from '@/data/names';
+import { COUNTS_BY_NAME, GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesGenderFilter } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
@@ -123,7 +123,12 @@ export default function SwipeScreen() {
         <View testID="swipeDeck" style={styles.deck} onLayout={handleDeckLayout}>
           {cardSize &&
             (currentName ? (
-              <NameCard name={currentName} style={cardSize} />
+              <NameCard
+                name={currentName}
+                boyCount={COUNTS_BY_NAME.get(currentName)!.boyCount}
+                girlCount={COUNTS_BY_NAME.get(currentName)!.girlCount}
+                style={cardSize}
+              />
             ) : (
               <ThemedView type="surface" style={[styles.emptyState, cardSize]}>
                 <ThemedText type="subtitle" style={styles.centerText}>
