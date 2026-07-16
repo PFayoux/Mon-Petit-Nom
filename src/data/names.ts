@@ -2015,8 +2015,21 @@ export const NAMES: readonly Name[] = [
 
 // A name matches a gender filter if it's tagged with that exact gender, or
 // tagged 'both' (fits either filter); the 'both' filter itself matches everyone.
+// Used to browse *unreviewed* names by their default gender (Swipe) — see
+// matchesReviewGenderFilter for the stricter rule used on already-reviewed
+// names (Résultats), and CONTEXT.md's "Onglet de genre".
 export function matchesGenderFilter(nameGender: Gender, filter: Gender): boolean {
   return filter === 'both' || nameGender === filter || nameGender === 'both';
+}
+
+// A review matches a gender filter if its chosen gender is that exact gender,
+// or 'both' (a review chosen as fitting either gender still shows up under
+// Boy and Girl). Unlike matchesGenderFilter, the 'both' filter is NOT a
+// wildcard here — it only matches reviews explicitly chosen as 'both', so
+// correcting a review's gender (Résultats' "⋮" menu) actually moves it out of
+// "Les deux" (see ADR-0005).
+export function matchesReviewGenderFilter(reviewGender: Gender, filter: Gender): boolean {
+  return reviewGender === filter || reviewGender === 'both';
 }
 
 export function getNamesForGender(filter: Gender): readonly Name[] {

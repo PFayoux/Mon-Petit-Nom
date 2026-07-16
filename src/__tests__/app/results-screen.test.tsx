@@ -19,7 +19,7 @@ describe('ResultsScreen', () => {
     expect(screen.getByText('Disliked (0)')).toBeOnTheScreen();
   });
 
-  test('Given a boy-only name marked as loved, When the screen renders with the default "Both" gender filter, Then it appears in the Loved tab', async () => {
+  test('Given a boy-only name marked as loved, When the screen renders with the default "All" gender tab, Then it appears in the Loved tab', async () => {
     await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
     await renderScreen(<ResultsScreen />);
 
@@ -96,6 +96,44 @@ describe('ResultsScreen', () => {
 
       await user.press(screen.getByText('Girl'));
 
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given a boy-only name loved for "boy" specifically, When the user filters by "Both", Then it does not appear in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Both'));
+
+      expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+      expect(screen.queryByText(BOY_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given a name loved for "both" specifically, When the user filters by "Both", Then it appears in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [BOTH_GENDER_NAME]: { status: 'love', gender: 'both' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Both'));
+
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(BOTH_GENDER_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given a boy-only name loved for "boy" specifically, When the user filters by "Both" then back to "All", Then it disappears then reappears in the Loved tab', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (1)');
+
+      await user.press(screen.getByText('Both'));
+      expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('All'));
       expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
       expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
     });
