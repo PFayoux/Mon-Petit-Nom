@@ -31,6 +31,7 @@ export type Translations = {
     emptyTitle: string;
     emptySubtitle: string;
     popularityLabel: (boyCount: number, girlCount: number) => string;
+    wiktionaryLinkButton: (name: string) => string;
   };
   results: {
     allGenderTab: string;
@@ -85,6 +86,7 @@ const en: Translations = {
     emptySubtitle: 'Check the Results tab to see how you did.',
     popularityLabel: (boyCount, girlCount) =>
       `${boyCount} boy${boyCount === 1 ? '' : 's'}, ${girlCount} girl${girlCount === 1 ? '' : 's'}`,
+    wiktionaryLinkButton: (name) => `Learn more about ${name} on Wiktionary`,
   },
   results: {
     allGenderTab: 'All',
@@ -139,6 +141,7 @@ const fr: Translations = {
     emptySubtitle: "Rends-toi dans l'onglet Résultats pour voir le bilan.",
     popularityLabel: (boyCount, girlCount) =>
       `${boyCount} garçon${boyCount === 1 ? '' : 's'}, ${girlCount} fille${girlCount === 1 ? '' : 's'}`,
+    wiktionaryLinkButton: (name) => `En savoir plus sur ${name} sur Wiktionnaire`,
   },
   results: {
     allGenderTab: 'Tous',

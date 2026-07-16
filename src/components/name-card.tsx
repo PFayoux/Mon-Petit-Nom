@@ -1,10 +1,12 @@
-import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import * as Linking from 'expo-linking';
+import { Pressable, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTranslation } from '@/i18n/use-translation';
 import { formatPopularityCount } from '@/lib/format-count';
+import { getWiktionaryUrl } from '@/lib/wiktionary-url';
 
 type NameCardProps = {
   name: string;
@@ -16,8 +18,18 @@ type NameCardProps = {
 export function NameCard({ name, boyCount, girlCount, style }: NameCardProps) {
   const t = useTranslation();
 
+  function handleWiktionaryPress() {
+    Linking.openURL(getWiktionaryUrl(name)).catch(() => {});
+  }
+
   return (
     <ThemedView testID="nameCard" type="surface" style={[styles.card, style]}>
+      <Pressable
+        accessibilityLabel={t.swipe.wiktionaryLinkButton(name)}
+        onPress={handleWiktionaryPress}
+        style={({ pressed }) => [styles.wiktionaryButton, pressed && styles.pressed]}>
+        <ThemedText style={styles.wiktionaryIcon}>ⓘ</ThemedText>
+      </Pressable>
       <ThemedText
         type="title"
         style={styles.name}
@@ -43,6 +55,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
+  },
+  wiktionaryButton: {
+    position: 'absolute',
+    top: Spacing.two,
+    right: Spacing.two,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wiktionaryIcon: {
+    fontSize: 20,
+    lineHeight: 20,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   name: {
     // The card's alignItems: 'center' shrink-wraps children to their content
