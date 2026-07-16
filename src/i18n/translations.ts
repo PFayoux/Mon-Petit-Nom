@@ -33,6 +33,7 @@ export type Translations = {
     popularityLabel: (boyCount: number, girlCount: number) => string;
   };
   results: {
+    allGenderTab: string;
     lovedSection: string;
     maybeSection: string;
     dislikedSection: string;
@@ -86,6 +87,7 @@ const en: Translations = {
       `${boyCount} boy${boyCount === 1 ? '' : 's'}, ${girlCount} girl${girlCount === 1 ? '' : 's'}`,
   },
   results: {
+    allGenderTab: 'All',
     lovedSection: 'Loved',
     maybeSection: 'Maybe',
     dislikedSection: 'Disliked',
@@ -139,6 +141,7 @@ const fr: Translations = {
       `${boyCount} garçon${boyCount === 1 ? '' : 's'}, ${girlCount} fille${girlCount === 1 ? '' : 's'}`,
   },
   results: {
+    allGenderTab: 'Tous',
     lovedSection: 'Adorés',
     maybeSection: 'Peut-être',
     dislikedSection: 'Pas aimés',

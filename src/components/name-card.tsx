@@ -18,7 +18,12 @@ export function NameCard({ name, boyCount, girlCount, style }: NameCardProps) {
 
   return (
     <ThemedView testID="nameCard" type="surface" style={[styles.card, style]}>
-      <ThemedText type="title" style={styles.name}>
+      <ThemedText
+        type="title"
+        style={styles.name}
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}>
         {name}
       </ThemedText>
       <ThemedText
@@ -37,9 +42,15 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
   },
   name: {
+    // The card's alignItems: 'center' shrink-wraps children to their content
+    // size by default, so a long name has no width to wrap against and
+    // overflows horizontally instead of breaking to a second line. Stretch
+    // forces it to the card's actual available width (minus padding) so
+    // wrapping — and adjustsFontSizeToFit above — have something to measure.
+    alignSelf: 'stretch',
     textAlign: 'center',
   },
   popularity: {

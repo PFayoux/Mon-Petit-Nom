@@ -8,7 +8,7 @@ import { SegmentedTabBar } from '@/components/segmented-tab-bar';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesGenderFilter } from '@/data/names';
+import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesReviewGenderFilter } from '@/data/names';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
@@ -22,6 +22,13 @@ type NamesBySection = {
 };
 
 type StatusSectionKey = keyof NamesBySection;
+
+// The Résultats gender tabs add a 4th option beyond Gender ('boy' | 'girl' |
+// 'both'): 'all' is an overview showing everything regardless of gender, and
+// is the default landing tab. Unlike Swipe's "both" filter (which also means
+// "show everyone" — see matchesGenderFilter), "both" here is an exact match:
+// only names/reviews genuinely tagged 'both' (see ADR-0005).
+type ResultsGenderFilter = Gender | 'all';
 
 // Matches DecisionButtons' compact button size — the tallest element in a row —
 // so FlatList's getItemLayout can compute offsets without measuring. The gap
@@ -38,16 +45,16 @@ const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
 function groupNamesByStatus(
   reviews: ReviewMap,
   names: readonly { name: string; gender: Gender }[],
-  selectedGender: Gender
+  selectedGender: ResultsGenderFilter
 ): NamesBySection {
   const groups: NamesBySection = { love: [], maybe: [], dislike: [], unmarked: [] };
   for (const { name, gender: defaultGender } of names) {
     const review = reviews[name];
     if (review?.status === 'love' || review?.status === 'maybe') {
-      if (matchesGenderFilter(review.gender, selectedGender)) {
+      if (selectedGender === 'all' || matchesReviewGenderFilter(review.gender, selectedGender)) {
         groups[review.status].push(name);
       }
-    } else if (matchesGenderFilter(defaultGender, selectedGender)) {
+    } else if (selectedGender === 'all' || matchesReviewGenderFilter(defaultGender, selectedGender)) {
       groups[review?.status ?? 'unmarked'].push(name);
     }
   }
@@ -95,13 +102,14 @@ export default function ResultsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [selectedGender, setSelectedGender] = useState<Gender>('both');
+  const [selectedGender, setSelectedGender] = useState<ResultsGenderFilter>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusSectionKey>('love');
   const [editingGenderName, setEditingGenderName] = useState<string | null>(null);
 
   const groups = useMemo(() => groupNamesByStatus(reviews, NAMES, selectedGender), [reviews, selectedGender]);
 
-  const genderSections: { key: Gender; label: string }[] = [
+  const genderSections: { key: ResultsGenderFilter; label: string }[] = [
+    { key: 'all', label: t.results.allGenderTab },
     { key: 'boy', label: t.gender.boy },
     { key: 'girl', label: t.gender.girl },
     { key: 'both', label: t.gender.both },
@@ -120,8 +128,11 @@ export default function ResultsScreen() {
     (name: string, status: ReviewStatus) => {
       // Changing status alone keeps a name's already-chosen gender — only the
       // "⋮" menu is meant to change it (CONTEXT.md's "Genre choisi"). A brand
-      // new review falls back to the current gender tab's default.
-      const gender = reviews[name]?.gender ?? getDefaultReviewGender(selectedGender, GENDER_BY_NAME.get(name)!);
+      // new review falls back to the current gender tab's default — "all"
+      // has no specific gender of its own, so it falls back the same way
+      // "both" already did: the name's own default gender.
+      const genderTabForDefault = selectedGender === 'all' ? 'both' : selectedGender;
+      const gender = reviews[name]?.gender ?? getDefaultReviewGender(genderTabForDefault, GENDER_BY_NAME.get(name)!);
       setReview(name, status, gender);
     },
     [reviews, selectedGender, setReview]
