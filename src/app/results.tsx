@@ -88,7 +88,7 @@ const NameReviewRow = memo(function NameReviewRow({
             accessibilityLabel={t.results.editGenderButton(name)}
             onPress={() => onEditGender(name)}
             style={({ pressed }) => [styles.editGenderButton, pressed && styles.pressed]}>
-            <ThemedText type="subtitle">⋮</ThemedText>
+            <ThemedText style={styles.editGenderIcon}>⋮</ThemedText>
           </Pressable>
         )}
       </View>
@@ -290,6 +290,13 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // type="subtitle" (32/44) left the glyph looking off-center next to the
+  // compact decision buttons' tight 16/20 icon — its oversized line-height
+  // doesn't visually center the same way inside the same 36px button.
+  editGenderIcon: {
+    fontSize: 20,
+    lineHeight: 20,
   },
   pressed: {
     opacity: 0.7,
