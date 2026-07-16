@@ -85,7 +85,10 @@ export default function SwipeScreen() {
       cardHeight = height;
       cardWidth = cardHeight * CARD_ASPECT_RATIO;
     }
-    return { width: cardWidth, height: cardHeight };
+    // minHeight, not height: a long name that wraps to 2 lines needs more
+    // room than the 3:4 ratio allows for, and the card must grow to fit it
+    // rather than clip the popularity row underneath.
+    return { width: cardWidth, minHeight: cardHeight };
   }, [deckSize]);
 
   function handleDecision(status: ReviewStatus) {
