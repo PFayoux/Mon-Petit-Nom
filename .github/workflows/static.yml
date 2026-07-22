@@ -1,37 +1,40 @@
-name: Deploy release to Pages
+name: Deploy web to Pages
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag de la release à déployer'
-        required: true
-        default: 'latest'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Download release asset
-        run: |
-          if [ "${{ github.event.inputs.tag }}" = "latest" ]; then
-            URL="https://github.com/${{ github.repository }}/releases/latest/download/web-build.zip"
-          else
-            URL="https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag }}/web-build.zip"
-          fi
-          curl -L -o web-build.zip "$URL"
-          mkdir site
-          unzip web-build.zip -d site
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: site
+          node-version: "24"
+          cache: "npm"
+      - run: npm ci
+      - name: Export web build
+        run: npx expo export -p web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
