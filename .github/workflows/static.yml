@@ -1,0 +1,29 @@
+name: Deploy release to Pages
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release asset
+        run: |
+          curl -L -o web-build.zip \
+            "https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/web-build.zip"
+          mkdir site
+          unzip web-build.zip -d site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
