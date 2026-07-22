@@ -1,8 +1,12 @@
 name: Deploy release to Pages
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag de la release à déployer'
+        required: true
+        default: 'latest'
 
 permissions:
   contents: read
@@ -15,8 +19,12 @@ jobs:
     steps:
       - name: Download release asset
         run: |
-          curl -L -o web-build.zip \
-            "https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/web-build.zip"
+          if [ "${{ github.event.inputs.tag }}" = "latest" ]; then
+            URL="https://github.com/${{ github.repository }}/releases/latest/download/web-build.zip"
+          else
+            URL="https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag }}/web-build.zip"
+          fi
+          curl -L -o web-build.zip "$URL"
           mkdir site
           unzip web-build.zip -d site
 
