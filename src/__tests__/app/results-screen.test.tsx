@@ -2,7 +2,7 @@ import { screen, userEvent, within } from '@testing-library/react-native';
 
 import ResultsScreen from '@/app/results';
 import { NAMES } from '@/data/names';
-import { getStoredReviews, renderScreen, seedAppStore } from '@/lib/test-utils';
+import { getStoredPartnerProfiles, getStoredReviews, renderScreen, seedAppStore } from '@/lib/test-utils';
 
 // Aaron is boy-only, Ada is girl-only, Camille is tagged 'both' — see src/data/names.ts.
 const BOY_ONLY_NAME = 'Aaron';
@@ -194,6 +194,93 @@ describe('ResultsScreen', () => {
 
       expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
       expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+  });
+
+  describe('comparing with a partner', () => {
+    // Not a real first name in NAMES, so text queries for it can't collide with a rendered row.
+    const PARTNER_NAME = 'PartnerUser';
+
+    test('Given no active partner, When the screen renders, Then there is no partner view toggle', async () => {
+      await renderScreen(<ResultsScreen />);
+
+      expect(screen.queryByText(PARTNER_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given an active partner, When the screen renders, Then a toggle for their list appears', async () => {
+      await seedAppStore({
+        partnerProfiles: [{ displayName: PARTNER_NAME, reviews: {} }],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+
+      expect(await screen.findByText(PARTNER_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given both loved the same name, When viewing "Me", Then the row shows a strong-match badge', async () => {
+      await seedAppStore({
+        reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } },
+        partnerProfiles: [
+          { displayName: PARTNER_NAME, reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } },
+        ],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+
+      expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.getByLabelText('Both loved')).toBeOnTheScreen();
+    });
+
+    test('Given the user switches to the partner tab, Then only Loved and Maybe status tabs are offered', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        partnerProfiles: [{ displayName: PARTNER_NAME, reviews: {} }],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+
+      await user.press(await screen.findByText(PARTNER_NAME));
+
+      expect(screen.getByText('Loved (0)')).toBeOnTheScreen();
+      expect(screen.getByText('Maybe (0)')).toBeOnTheScreen();
+      expect(screen.queryByText(/Disliked/)).not.toBeOnTheScreen();
+      expect(screen.queryByText(/Unmarked/)).not.toBeOnTheScreen();
+    });
+
+    test('Given the partner loved a name the user has not reviewed, When viewing the partner tab, Then it appears as a discovery row', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        partnerProfiles: [
+          { displayName: PARTNER_NAME, reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } },
+        ],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+
+      await user.press(await screen.findByText(PARTNER_NAME));
+
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given a discovery row, When the user classifies it, Then only their own reviews are written — the partner profile stays untouched', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        partnerProfiles: [
+          { displayName: PARTNER_NAME, reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } },
+        ],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+      await user.press(await screen.findByText(PARTNER_NAME));
+      await screen.findByText(BOY_ONLY_NAME);
+
+      await user.press(screen.getByLabelText('Love'));
+
+      expect(await getStoredReviews()).toEqual({ [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } });
+      expect(await getStoredPartnerProfiles()).toEqual([
+        { displayName: PARTNER_NAME, reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } },
+      ]);
     });
   });
 });

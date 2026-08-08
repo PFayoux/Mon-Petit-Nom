@@ -12,6 +12,7 @@ import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesReviewGenderFilte
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
+import { groupNamesByPartnerMatch, type MatchTier } from '@/lib/partner-matching';
 import type { Gender, ReviewMap, ReviewStatus } from '@/types/name';
 
 type NamesBySection = {
@@ -29,6 +30,17 @@ type StatusSectionKey = keyof NamesBySection;
 // "show everyone" — see matchesGenderFilter), "both" here is an exact match:
 // only names/reviews genuinely tagged 'both' (see ADR-0005).
 type ResultsGenderFilter = Gender | 'all';
+
+// "Moi" is always available; the partner tab only exists once one is active
+// (see ADR-0008 and CONTEXT.md's "Correspondance") — orthogonal to the
+// gender tabs above, not a replacement for them.
+type ResultsViewKey = 'me' | 'partner';
+
+const MATCH_EMOJI: Record<MatchTier, string> = {
+  strong: '💗',
+  partial: '💚',
+  soft: '🩶',
+};
 
 // Matches DecisionButtons' compact button size — the tallest element in a row —
 // so FlatList's getItemLayout can compute offsets without measuring. The gap
@@ -64,14 +76,22 @@ function groupNamesByStatus(
   return groups;
 }
 
+const MATCH_TIER_LABEL_KEY: Record<MatchTier, 'strongMatchLabel' | 'partialMatchLabel' | 'softMatchLabel'> = {
+  strong: 'strongMatchLabel',
+  partial: 'partialMatchLabel',
+  soft: 'softMatchLabel',
+};
+
 const NameReviewRow = memo(function NameReviewRow({
   name,
   status,
+  matchTier,
   onSelect,
   onEditGender,
 }: {
   name: string;
   status?: ReviewStatus;
+  matchTier?: MatchTier | null;
   onSelect: (name: string, status: ReviewStatus) => void;
   onEditGender: (name: string) => void;
 }) {
@@ -80,7 +100,14 @@ const NameReviewRow = memo(function NameReviewRow({
 
   return (
     <View style={styles.row}>
-      <ThemedText style={styles.rowName}>{name}</ThemedText>
+      <View style={styles.rowNameGroup}>
+        <ThemedText style={styles.rowName}>{name}</ThemedText>
+        {matchTier && (
+          <ThemedText accessibilityLabel={t.results[MATCH_TIER_LABEL_KEY[matchTier]]}>
+            {MATCH_EMOJI[matchTier]}
+          </ThemedText>
+        )}
+      </View>
       <View style={styles.rowActions}>
         <DecisionButtons size="compact" selectedStatus={status} onSelect={(status) => onSelect(name, status)} />
         {canEditGender && (
@@ -97,16 +124,45 @@ const NameReviewRow = memo(function NameReviewRow({
 });
 
 export default function ResultsScreen() {
-  const { reviews, setReview } = useAppStore();
+  const { reviews, setReview, activePartnerProfile } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [selectedGender, setSelectedGender] = useState<ResultsGenderFilter>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusSectionKey>('love');
+  const [selectedView, setSelectedView] = useState<ResultsViewKey>('me');
   const [editingGenderName, setEditingGenderName] = useState<string | null>(null);
 
   const groups = useMemo(() => groupNamesByStatus(reviews, NAMES, selectedGender), [reviews, selectedGender]);
+
+  // Only computed once a partner is active — drives both the partner tab's
+  // own Aimé/Peut-être lists and the match badges overlaid on "Moi" tabs.
+  const partnerMatches = useMemo(
+    () => (activePartnerProfile ? groupNamesByPartnerMatch(reviews, activePartnerProfile.reviews, NAMES) : null),
+    [reviews, activePartnerProfile]
+  );
+
+  const matchTierByName = useMemo(() => {
+    if (!partnerMatches) return null;
+    const map = new Map<string, MatchTier>();
+    for (const entry of [...partnerMatches.love, ...partnerMatches.maybe]) {
+      if (entry.matchTier) map.set(entry.name, entry.matchTier);
+    }
+    return map;
+  }, [partnerMatches]);
+
+  const isPartnerView = selectedView === 'partner' && partnerMatches !== null;
+
+  function handleSelectView(view: ResultsViewKey) {
+    setSelectedView(view);
+    // The partner tab only ever has Aimé/Peut-être (no Pas aimé/Non classé —
+    // dislikes aren't shared, see ADR-0008) — fall back to Aimé if the
+    // previously selected status doesn't apply there.
+    if (view === 'partner' && selectedStatus !== 'love' && selectedStatus !== 'maybe') {
+      setSelectedStatus('love');
+    }
+  }
 
   const genderSections: { key: ResultsGenderFilter; label: string }[] = [
     { key: 'all', label: t.results.allGenderTab },
@@ -115,14 +171,29 @@ export default function ResultsScreen() {
     { key: 'both', label: t.gender.both },
   ];
 
-  const sections: { key: StatusSectionKey; label: string; count: number }[] = [
-    { key: 'love', label: t.results.lovedSection, count: groups.love.length },
-    { key: 'maybe', label: t.results.maybeSection, count: groups.maybe.length },
-    { key: 'dislike', label: t.results.dislikedSection, count: groups.dislike.length },
-    { key: 'unmarked', label: t.results.unmarkedSection, count: groups.unmarked.length },
-  ];
+  const viewSections: { key: ResultsViewKey; label: string }[] | null = activePartnerProfile
+    ? [
+        { key: 'me', label: t.results.myViewTab },
+        { key: 'partner', label: activePartnerProfile.displayName },
+      ]
+    : null;
 
-  const selectedNames = groups[selectedStatus];
+  const sections: { key: StatusSectionKey; label: string; count: number }[] = isPartnerView
+    ? [
+        { key: 'love', label: t.results.lovedSection, count: partnerMatches.love.length },
+        { key: 'maybe', label: t.results.maybeSection, count: partnerMatches.maybe.length },
+      ]
+    : [
+        { key: 'love', label: t.results.lovedSection, count: groups.love.length },
+        { key: 'maybe', label: t.results.maybeSection, count: groups.maybe.length },
+        { key: 'dislike', label: t.results.dislikedSection, count: groups.dislike.length },
+        { key: 'unmarked', label: t.results.unmarkedSection, count: groups.unmarked.length },
+      ];
+
+  const selectedNames =
+    isPartnerView && (selectedStatus === 'love' || selectedStatus === 'maybe')
+      ? partnerMatches[selectedStatus].map((entry) => entry.name)
+      : groups[selectedStatus];
 
   const handleRowSelect = useCallback(
     (name: string, status: ReviewStatus) => {
@@ -158,11 +229,12 @@ export default function ResultsScreen() {
       <NameReviewRow
         name={name}
         status={reviews[name]?.status}
+        matchTier={matchTierByName?.get(name)}
         onSelect={handleRowSelect}
         onEditGender={handleEditGender}
       />
     ),
-    [reviews, handleRowSelect, handleEditGender]
+    [reviews, matchTierByName, handleRowSelect, handleEditGender]
   );
 
   const getItemLayout = useCallback(
@@ -185,6 +257,12 @@ export default function ResultsScreen() {
         ]}>
         <View style={styles.headerContent}>
           <SegmentedTabBar sections={genderSections} selected={selectedGender} onSelect={setSelectedGender} />
+          {viewSections && (
+            <>
+              <View style={styles.headerGap} />
+              <SegmentedTabBar sections={viewSections} selected={selectedView} onSelect={handleSelectView} />
+            </>
+          )}
           <View style={styles.headerGap} />
           <SegmentedTabBar sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
         </View>
@@ -276,6 +354,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  rowNameGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    flexShrink: 1,
   },
   rowName: {
     flexShrink: 1,
