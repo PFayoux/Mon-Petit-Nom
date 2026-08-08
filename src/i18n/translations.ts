@@ -49,6 +49,8 @@ export type Translations = {
     resetButton: string;
     resetConfirmTitle: string;
     resetConfirmMessage: string;
+    shareButton: string;
+    shareErrorMessage: string;
   };
 };
 
@@ -104,6 +106,8 @@ const en: Translations = {
     resetButton: 'Reset all answers',
     resetConfirmTitle: 'Reset all answers?',
     resetConfirmMessage: 'This will clear every name you have reviewed. This cannot be undone.',
+    shareButton: 'Share my list',
+    shareErrorMessage: 'Could not share your list. Please try again.',
   },
 };
 
@@ -159,6 +163,8 @@ const fr: Translations = {
     resetButton: 'Réinitialiser les réponses',
     resetConfirmTitle: 'Réinitialiser toutes les réponses ?',
     resetConfirmMessage: 'Tous les prénoms déjà classés seront remis à zéro. Action irréversible.',
+    shareButton: 'Partager ma liste',
+    shareErrorMessage: 'Impossible de partager ta liste. Réessaie.',
   },
 };
 

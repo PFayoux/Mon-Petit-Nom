@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Sharing from 'expo-sharing';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -8,14 +9,22 @@ import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
+import { buildPartnerExport, exportPartnerProfile } from '@/lib/partner-export';
 
 export default function SettingsScreen() {
-  const { displayName, setDisplayName, resetAllReviews } = useAppStore();
+  const { displayName, setDisplayName, resetAllReviews, reviews } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [nameDraft, setNameDraft] = useState(displayName ?? '');
+  // expo-sharing doesn't support sharing local files on web — hide the
+  // button there instead of letting it silently fail (see ADR-0008).
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    Sharing.isAvailableAsync().then(setCanShare);
+  }, []);
 
   function handleSaveDisplayName() {
     const trimmed = nameDraft.trim();
@@ -36,6 +45,16 @@ export default function SettingsScreen() {
       { text: t.common.cancel, style: 'cancel' },
       { text: t.settings.resetButton, style: 'destructive', onPress: resetAllReviews },
     ]);
+  }
+
+  async function handleSharePress() {
+    if (!displayName) return;
+    try {
+      await exportPartnerProfile(buildPartnerExport(displayName, reviews));
+    } catch {
+      // canShare gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
+      Alert.alert(t.settings.shareErrorMessage);
+    }
   }
 
   return (
@@ -68,9 +87,19 @@ export default function SettingsScreen() {
             />
           </View>
 
+          {canShare && (
+            <Pressable
+              onPress={handleSharePress}
+              style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="text">
+                {t.settings.shareButton}
+              </ThemedText>
+            </Pressable>
+          )}
+
           <Pressable
             onPress={handleResetPress}
-            style={({ pressed }) => [styles.resetButton, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
             <ThemedText type="link" themeColor="text">
               {t.settings.resetButton}
             </ThemedText>
@@ -110,7 +139,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     fontSize: 16,
   },
-  resetButton: {
+  linkButton: {
     alignSelf: 'flex-start',
   },
   pressed: {

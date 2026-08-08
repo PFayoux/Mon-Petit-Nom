@@ -23,3 +23,12 @@ export type Review = {
 };
 
 export type ReviewMap = Record<string, Review>;
+
+// A profile exported by another person using the app on their own phone and
+// imported from Settings (see ADR-0008 and CONTEXT.md's "Profil partenaire").
+// `reviews` only ever contains `love`/`maybe` entries — `dislike` never
+// leaves the exporting phone.
+export type PartnerProfile = {
+  displayName: string;
+  reviews: ReviewMap;
+};
