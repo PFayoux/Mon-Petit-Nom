@@ -138,9 +138,14 @@ export default function ResultsScreen() {
 
   // Only computed once a partner is active — drives both the partner tab's
   // own Aimé/Peut-être lists and the match badges overlaid on "Moi" tabs.
+  // Gender-filtered the same way groups is, so the gender tabs apply to the
+  // partner view too (see ADR-0008: the two tab rows are independent).
   const partnerMatches = useMemo(
-    () => (activePartnerProfile ? groupNamesByPartnerMatch(reviews, activePartnerProfile.reviews, NAMES) : null),
-    [reviews, activePartnerProfile]
+    () =>
+      activePartnerProfile
+        ? groupNamesByPartnerMatch(reviews, activePartnerProfile.reviews, NAMES, selectedGender)
+        : null,
+    [reviews, activePartnerProfile, selectedGender]
   );
 
   const matchTierByName = useMemo(() => {
