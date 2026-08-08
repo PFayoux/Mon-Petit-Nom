@@ -42,6 +42,10 @@ export type Translations = {
     emptySection: string;
     editGenderButton: (name: string) => string;
     editGenderModalTitle: string;
+    myViewTab: string;
+    strongMatchLabel: string;
+    partialMatchLabel: string;
+    softMatchLabel: string;
   };
   settings: {
     title: string;
@@ -105,6 +109,10 @@ const en: Translations = {
     emptySection: 'No names here yet',
     editGenderButton: (name) => `Edit gender for ${name}`,
     editGenderModalTitle: 'Choose a gender for this name',
+    myViewTab: 'Me',
+    strongMatchLabel: 'Both loved',
+    partialMatchLabel: 'One loved, one maybe',
+    softMatchLabel: 'Both maybe',
   },
   settings: {
     title: 'Settings',
@@ -168,6 +176,10 @@ const fr: Translations = {
     emptySection: 'Aucun prénom ici pour le moment',
     editGenderButton: (name) => `Modifier le genre de ${name}`,
     editGenderModalTitle: 'Choisis un genre pour ce prénom',
+    myViewTab: 'Moi',
+    strongMatchLabel: 'Vous adorez tous les deux',
+    partialMatchLabel: "L'un adore, l'autre pense peut-être",
+    softMatchLabel: 'Vous hésitez tous les deux',
   },
   settings: {
     title: 'Réglages',
