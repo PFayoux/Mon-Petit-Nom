@@ -8,6 +8,7 @@ import type { PartnerProfile, ReviewMap } from '@/types/name';
 const DISPLAY_NAME_KEY = '@mon-petit-nom/display-name';
 const REVIEWS_KEY = '@mon-petit-nom/reviews';
 const PARTNER_PROFILES_KEY = '@mon-petit-nom/partner-profiles';
+const ACTIVE_PARTNER_NAME_KEY = '@mon-petit-nom/active-partner-name';
 
 // Pre-populates the mocked AsyncStorage so AppStoreProvider hydrates with this
 // state on the next render, instead of starting empty.
@@ -15,10 +16,12 @@ export async function seedAppStore({
   displayName,
   reviews,
   partnerProfiles,
+  activePartnerName,
 }: {
   displayName?: string;
   reviews?: ReviewMap;
   partnerProfiles?: PartnerProfile[];
+  activePartnerName?: string;
 }) {
   if (displayName !== undefined) {
     await AsyncStorage.setItem(DISPLAY_NAME_KEY, displayName);
@@ -28,6 +31,9 @@ export async function seedAppStore({
   }
   if (partnerProfiles !== undefined) {
     await AsyncStorage.setItem(PARTNER_PROFILES_KEY, JSON.stringify(partnerProfiles));
+  }
+  if (activePartnerName !== undefined) {
+    await AsyncStorage.setItem(ACTIVE_PARTNER_NAME_KEY, activePartnerName);
   }
 }
 
@@ -41,6 +47,10 @@ export async function getStoredReviews(): Promise<ReviewMap> {
 export async function getStoredPartnerProfiles(): Promise<PartnerProfile[]> {
   const raw = await AsyncStorage.getItem(PARTNER_PROFILES_KEY);
   return raw ? JSON.parse(raw) : [];
+}
+
+export async function getStoredActivePartnerName(): Promise<string | null> {
+  return AsyncStorage.getItem(ACTIVE_PARTNER_NAME_KEY);
 }
 
 function AllProviders({ children }: { children: ReactNode }) {

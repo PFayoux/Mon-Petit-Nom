@@ -9,9 +9,11 @@ import {
 } from 'react';
 
 import {
+  loadActivePartnerName,
   loadDisplayName,
   loadPartnerProfiles,
   loadReviews,
+  saveActivePartnerName,
   saveDisplayName,
   savePartnerProfiles,
   saveReviews,
@@ -23,11 +25,15 @@ type AppStore = {
   displayName: string | null;
   reviews: ReviewMap;
   partnerProfiles: PartnerProfile[];
+  activePartnerName: string | null;
+  activePartnerProfile: PartnerProfile | null;
   setDisplayName: (name: string) => void;
   setReview: (name: string, status: ReviewStatus, gender: Gender) => void;
   clearReview: (name: string) => void;
   resetAllReviews: () => void;
   importPartnerProfile: (profile: PartnerProfile) => void;
+  removePartnerProfile: (displayName: string) => void;
+  setActivePartnerName: (displayName: string | null) => void;
 };
 
 const AppStoreContext = createContext<AppStore | null>(null);
@@ -37,13 +43,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [displayName, setDisplayNameState] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewMap>({});
   const [partnerProfiles, setPartnerProfiles] = useState<PartnerProfile[]>([]);
+  const [activePartnerName, setActivePartnerNameState] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([loadDisplayName(), loadReviews(), loadPartnerProfiles()]).then(
-      ([storedName, storedReviews, storedPartnerProfiles]) => {
+    Promise.all([loadDisplayName(), loadReviews(), loadPartnerProfiles(), loadActivePartnerName()]).then(
+      ([storedName, storedReviews, storedPartnerProfiles, storedActivePartnerName]) => {
         setDisplayNameState(storedName);
         setReviews(storedReviews);
         setPartnerProfiles(storedPartnerProfiles);
+        setActivePartnerNameState(storedActivePartnerName);
         setIsHydrated(true);
       }
     );
@@ -86,28 +94,61 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setActivePartnerName = useCallback((name: string | null) => {
+    setActivePartnerNameState(name);
+    saveActivePartnerName(name);
+  }, []);
+
+  const removePartnerProfile = useCallback((displayNameToRemove: string) => {
+    setPartnerProfiles((current) => {
+      const next = current.filter((existing) => existing.displayName !== displayNameToRemove);
+      savePartnerProfiles(next);
+      return next;
+    });
+    // Removing the active partner's profile also clears the selection —
+    // otherwise Résultats would keep comparing against data that no longer exists.
+    setActivePartnerNameState((current) => {
+      if (current !== displayNameToRemove) return current;
+      saveActivePartnerName(null);
+      return null;
+    });
+  }, []);
+
+  const activePartnerProfile = useMemo(
+    () => partnerProfiles.find((profile) => profile.displayName === activePartnerName) ?? null,
+    [partnerProfiles, activePartnerName]
+  );
+
   const value = useMemo<AppStore>(
     () => ({
       isHydrated,
       displayName,
       reviews,
       partnerProfiles,
+      activePartnerName,
+      activePartnerProfile,
       setDisplayName,
       setReview,
       clearReview,
       resetAllReviews,
       importPartnerProfile,
+      removePartnerProfile,
+      setActivePartnerName,
     }),
     [
       isHydrated,
       displayName,
       reviews,
       partnerProfiles,
+      activePartnerName,
+      activePartnerProfile,
       setDisplayName,
       setReview,
       clearReview,
       resetAllReviews,
       importPartnerProfile,
+      removePartnerProfile,
+      setActivePartnerName,
     ]
   );
 

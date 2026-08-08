@@ -3,7 +3,7 @@ import { File } from 'expo-file-system';
 import { screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import SettingsScreen from '@/app/settings';
-import { getStoredPartnerProfiles, renderScreen, seedAppStore } from '@/lib/test-utils';
+import { getStoredActivePartnerName, getStoredPartnerProfiles, renderScreen, seedAppStore } from '@/lib/test-utils';
 
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
@@ -84,5 +84,64 @@ describe('SettingsScreen', () => {
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledWith('Could not import this file. Please check it is a list exported from this app.'));
     expect(await getStoredPartnerProfiles()).toEqual([]);
+  });
+
+  describe('selecting and managing the active partner', () => {
+    const CAMILLE = { displayName: 'Camille', reviews: {} };
+    const ALICE = { displayName: 'Alice', reviews: {} };
+
+    test('Given imported partner profiles, When the user selects one, Then it is stored as the active partner', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({ displayName: 'Alex', partnerProfiles: [CAMILLE, ALICE] });
+      await renderScreen(<SettingsScreen />);
+
+      await user.press(await screen.findByLabelText('Compare with Camille'));
+
+      await waitFor(async () => expect(await getStoredActivePartnerName()).toBe('Camille'));
+    });
+
+    test('Given an active partner, When the user selects it again, Then the active partner is cleared', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        displayName: 'Alex',
+        partnerProfiles: [CAMILLE, ALICE],
+        activePartnerName: 'Camille',
+      });
+      await renderScreen(<SettingsScreen />);
+
+      await user.press(await screen.findByLabelText('Stop comparing with Camille'));
+
+      await waitFor(async () => expect(await getStoredActivePartnerName()).toBeNull());
+    });
+
+    test('Given the active partner is removed, When the profile list is checked, Then both the profile and the active selection are gone', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        displayName: 'Alex',
+        partnerProfiles: [CAMILLE, ALICE],
+        activePartnerName: 'Camille',
+      });
+      await renderScreen(<SettingsScreen />);
+
+      await user.press(await screen.findByLabelText("Remove Camille's list"));
+
+      await waitFor(async () => expect(await getStoredPartnerProfiles()).toEqual([ALICE]));
+      expect(await getStoredActivePartnerName()).toBeNull();
+    });
+
+    test('Given a non-active partner is removed, When the profile list is checked, Then the active partner is unaffected', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        displayName: 'Alex',
+        partnerProfiles: [CAMILLE, ALICE],
+        activePartnerName: 'Camille',
+      });
+      await renderScreen(<SettingsScreen />);
+
+      await user.press(await screen.findByLabelText("Remove Alice's list"));
+
+      await waitFor(async () => expect(await getStoredPartnerProfiles()).toEqual([CAMILLE]));
+      expect(await getStoredActivePartnerName()).toBe('Camille');
+    });
   });
 });
