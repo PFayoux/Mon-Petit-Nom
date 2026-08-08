@@ -1,56 +1,64 @@
-# Welcome to your Expo app 👋
+<p align="center">
+  <img src="assets/images/logo.png" width="120" alt="Logo Mon Petit Nom" />
+</p>
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<h1 align="center">Mon Petit Nom</h1>
 
-## Get started
+<p align="center">
+  Une app pour choisir un prénom en couple — chacun swipe de son côté, puis vous comparez.
+</p>
 
-1. Install dependencies
+## Le principe
 
-   ```bash
-   npm install
-   ```
+Mon Petit Nom aide un couple à choisir un prénom de naissance sans avoir à se mettre d'accord tout de suite. Chaque personne installe l'app sur son propre téléphone, passe en revue les prénoms un par un (swipe) et les classe en ❤️ J'adore, 🤔 Peut-être ou ✕ Pas aimé. Une fois les deux listes constituées, chacun peut exporter la sienne et importer celle de l'autre pour voir directement, dans Résultats, les prénoms qu'ils ont en commun — et ceux que l'autre a aimés sans qu'on les ait encore vus.
 
-2. Start the app
+Pas de compte, pas de serveur : tout le classement reste stocké localement sur l'appareil, et l'échange entre partenaires passe par un simple fichier envoyé via la feuille de partage native du téléphone (WhatsApp, AirDrop, Nearby Share, ce que vous voulez).
 
-   ```bash
-   npx expo start
-   ```
+## Fonctionnalités
 
-In the output, you'll find options to open the app in a
+- **Swipe** à travers environ 2000 prénoms français (dataset [INSEE](https://www.data.gouv.fr/)), avec pour chacun sa popularité en France depuis 1900 et un lien vers son étymologie sur le Wiktionnaire.
+- **Résultats** groupés par avis (Adoré / Peut-être / Pas aimé / Non classé) et filtrables par genre (Garçon / Fille / Les deux / Tous), avec possibilité de corriger le genre choisi après coup.
+- **Comparaison entre partenaires** : exporte ta liste (❤️/🤔 uniquement — tes ✕ restent privés), importe celle de ton/ta partenaire depuis Réglages, et retrouve un onglet dédié dans Résultats avec vos prénoms en commun (un cœur indique la force de la correspondance : 💗 vous adorez tous les deux, 💚 l'un adore et l'autre hésite, 🩶 vous hésitez tous les deux) ainsi que les découvertes — les prénoms que l'autre a aimés et que tu n'as pas encore classés.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Stack technique
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- [Expo](https://expo.dev) (SDK 57) + [Expo Router](https://docs.expo.dev/router/introduction/) sur React Native 0.86 / React 19, en TypeScript.
+- Stockage 100% local (`@react-native-async-storage/async-storage`) — pas de backend.
+- Jest + [Testing Library](https://callstack.github.io/react-native-testing-library/) pour les tests unitaires et d'écran, [Playwright](https://playwright.dev/) pour les tests de mise en page (build web).
+- Cibles : Android et iOS (build natif), ainsi que le web (export statique).
 
-## Get a fresh project
+## Démarrer
 
-When you're ready, run:
+Prérequis : Node.js et npm.
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Depuis là, tu peux lancer l'app sur Android (`npm run android`), iOS (`npm run ios`) ou le web (`npm run web`) — voir la [doc Expo](https://docs.expo.dev/) pour la mise en place de l'environnement natif si besoin.
 
-### Other setup steps
+> Ce projet suit d'assez près les évolutions d'Expo — voir [`AGENTS.md`](./AGENTS.md) si tu modifies du code touchant au SDK.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Tests
 
-## Learn more
+```bash
+npm test          # tests unitaires et d'écran (Jest)
+npm run test:e2e  # tests de mise en page (Playwright, build web)
+npm run lint       # ESLint
+npx tsc --noEmit   # vérification des types
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Documentation du projet
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- [`CONTEXT.md`](./CONTEXT.md) — glossaire du domaine : le vocabulaire produit à utiliser dans le code, les commits et les PR.
+- [`docs/adr/`](./docs/adr) — décisions d'architecture (ADR) : le contexte, la décision retenue et les alternatives écartées pour chaque choix structurant.
+- [`AGENTS.md`](./AGENTS.md) — note à l'attention des agents IA travaillant sur ce repo.
 
-## Join the community
+## Contribuer
 
-Join our community of developers creating universal apps.
+Voir [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Licence
+
+Tous droits réservés — voir [`LICENSE`](./LICENSE). Le code est public à titre de démonstration ; aucune permission n'est accordée de le réutiliser, copier ou redistribuer.
