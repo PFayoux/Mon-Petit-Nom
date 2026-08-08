@@ -23,3 +23,11 @@ _Avoid_: Sexe (préférer "genre" pour rester cohérent avec le vocabulaire déj
 **Onglet de genre** :
 Le widget Garçons/Filles/Les deux existe sur Swipe et sur Résultats, mais avec un sens différent (voir [ADR-0005](./docs/adr/0005-gender-tab-semantics-differ-by-screen.md)). Sur Swipe, il filtre les prénoms **non classés** par leur genre par défaut — "Les deux" y est un filtre inclusif : il montre tous les prénoms candidats, y compris ceux genrés garçon ou fille. Sur Résultats, un 4ᵉ onglet **"Tous"** s'ajoute (et devient l'onglet par défaut à l'ouverture) : lui seul montre tout, quel que soit le genre. "Garçons"/"Filles"/"Les deux" y filtrent les reviews par leur **genre choisi** à correspondance exacte (+ un review genré `both` convient aussi à "Garçons" et "Filles") — "Les deux" n'y montre que les reviews explicitement genrées `both`, ce n'est plus un filtre "tout montrer" comme sur Swipe.
 _Avoid_: Filtre de genre (seul, sans préciser l'écran — le sens change selon Swipe ou Résultats)
+
+**Profil partenaire** :
+Un fichier `{ displayName, reviews }` importé depuis Réglages, exporté par une autre personne utilisant l'app sur son propre téléphone (voir [ADR-0008](./docs/adr/0008-partner-list-sharing-via-file-export.md)). Ne contient que ses reviews `love`/`maybe` — jamais `dislike`. Plusieurs profils partenaires peuvent être importés et conservés, mais un seul est **actif** à la fois ; réimporter un fichier portant le même `displayName` remplace le profil existant. Données en lecture seule : rien dans l'app n'écrit jamais dans un profil partenaire, seulement dans les reviews de l'utilisateur.
+_Avoid_: Partenaire (seul — ambigu entre la personne réelle et le profil importé sur l'appareil)
+
+**Correspondance** :
+Le rapprochement entre une review de l'utilisateur et celle du profil partenaire actif sur un même prénom, uniquement parmi `love`/`maybe` (jamais `dislike`, exclu de l'export). Trois niveaux : `love`+`love` (forte), `love`+`maybe` dans un sens ou l'autre (partielle), `maybe`+`maybe` (faible) — affichés respectivement par un cœur rose, vert, gris. Un prénom aimé/peut-être par le partenaire mais non classé par l'utilisateur n'est pas une correspondance : c'est une **découverte**, classable directement sur place.
+_Avoid_: Match (préférer le terme français, cohérent avec le reste du glossaire)
