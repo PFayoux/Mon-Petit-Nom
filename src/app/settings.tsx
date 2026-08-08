@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import { ThemedText } from '@/components/themed-text';
@@ -10,20 +11,22 @@ import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
 import { buildPartnerExport, exportPartnerProfile } from '@/lib/partner-export';
+import { parsePartnerProfile } from '@/lib/partner-import';
 
 export default function SettingsScreen() {
-  const { displayName, setDisplayName, resetAllReviews, reviews } = useAppStore();
+  const { displayName, setDisplayName, resetAllReviews, reviews, importPartnerProfile } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [nameDraft, setNameDraft] = useState(displayName ?? '');
-  // expo-sharing doesn't support sharing local files on web — hide the
-  // button there instead of letting it silently fail (see ADR-0008).
-  const [canShare, setCanShare] = useState(false);
+  // Partner list sharing is scoped to iOS/Android: expo-sharing doesn't support
+  // sharing local files on web, so import is hidden alongside it there too
+  // rather than offering half a feature (see ADR-0008).
+  const [canSharePartnerLists, setCanSharePartnerLists] = useState(false);
 
   useEffect(() => {
-    Sharing.isAvailableAsync().then(setCanShare);
+    Sharing.isAvailableAsync().then(setCanSharePartnerLists);
   }, []);
 
   function handleSaveDisplayName() {
@@ -52,8 +55,21 @@ export default function SettingsScreen() {
     try {
       await exportPartnerProfile(buildPartnerExport(displayName, reviews));
     } catch {
-      // canShare gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
+      // canSharePartnerLists gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
       Alert.alert(t.settings.shareErrorMessage);
+    }
+  }
+
+  async function handleImportPress() {
+    const picked = await File.pickFileAsync({ mimeTypes: 'application/json' });
+    if (picked.canceled) return;
+
+    try {
+      const jsonText = await picked.result.text();
+      importPartnerProfile(parsePartnerProfile(jsonText));
+    } catch {
+      // canSharePartnerLists gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
+      Alert.alert(t.settings.importErrorMessage);
     }
   }
 
@@ -87,14 +103,24 @@ export default function SettingsScreen() {
             />
           </View>
 
-          {canShare && (
-            <Pressable
-              onPress={handleSharePress}
-              style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
-              <ThemedText type="link" themeColor="text">
-                {t.settings.shareButton}
-              </ThemedText>
-            </Pressable>
+          {canSharePartnerLists && (
+            <>
+              <Pressable
+                onPress={handleSharePress}
+                style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="text">
+                  {t.settings.shareButton}
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={handleImportPress}
+                style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+                <ThemedText type="link" themeColor="text">
+                  {t.settings.importButton}
+                </ThemedText>
+              </Pressable>
+            </>
           )}
 
           <Pressable
