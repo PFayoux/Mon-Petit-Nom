@@ -282,5 +282,46 @@ describe('ResultsScreen', () => {
         { displayName: PARTNER_NAME, reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } } },
       ]);
     });
+
+    test('Given a name only the user has loved, When viewing the partner tab, Then it does not appear — the partner has no opinion on it', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        reviews: { [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' } },
+        partnerProfiles: [{ displayName: PARTNER_NAME, reviews: {} }],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+      expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+
+      await user.press(await screen.findByText(PARTNER_NAME));
+
+      expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+      expect(screen.queryByText(BOY_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given the partner loved names of both genders, When the user filters by "Boy" in the partner tab, Then only the boy-gendered one appears', async () => {
+      const user = userEvent.setup();
+      await seedAppStore({
+        partnerProfiles: [
+          {
+            displayName: PARTNER_NAME,
+            reviews: {
+              [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' },
+              [GIRL_ONLY_NAME]: { status: 'love', gender: 'girl' },
+            },
+          },
+        ],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+      await user.press(await screen.findByText(PARTNER_NAME));
+      expect(await screen.findByText('Loved (2)')).toBeOnTheScreen();
+
+      await user.press(screen.getByText('Boy'));
+
+      expect(await screen.findByText('Loved (1)')).toBeOnTheScreen();
+      expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
   });
 });

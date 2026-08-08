@@ -1,4 +1,5 @@
-import type { ReviewMap } from '@/types/name';
+import { matchesReviewGenderFilter } from '@/data/names';
+import type { Gender, ReviewMap } from '@/types/name';
 
 // See CONTEXT.md's "Correspondance": strong = love+love, partial = love+maybe
 // (either direction), soft = maybe+maybe, null = no match (a pure discovery
@@ -33,22 +34,33 @@ function toLoveOrMaybe(status: string | undefined): 'love' | 'maybe' | undefined
 }
 
 // Given the user's own reviews and the active partner's imported reviews,
-// groups every name either side loved/maybe'd — filed under the user's own
-// status when they have one, or the partner's status for a discovery row.
+// groups every name the *partner* loved/maybe'd — this is the partner's
+// list, so a name only the user reviewed (with no opinion from the partner)
+// never appears here. Filed under the user's own status when they have one
+// too (a match), or the partner's status for a discovery row.
 export function groupNamesByPartnerMatch(
   myReviews: ReviewMap,
   partnerReviews: ReviewMap,
-  names: readonly { name: string }[]
+  names: readonly { name: string }[],
+  selectedGender: Gender | 'all' = 'all'
 ): PartnerMatches {
   const groups: PartnerMatches = { love: [], maybe: [] };
 
   for (const { name } of names) {
-    const myStatus = toLoveOrMaybe(myReviews[name]?.status);
-    const partnerStatus = toLoveOrMaybe(partnerReviews[name]?.status);
-    if (!myStatus && !partnerStatus) continue;
+    const myReview = myReviews[name];
+    const partnerReview = partnerReviews[name];
+    const myStatus = toLoveOrMaybe(myReview?.status);
+    const partnerStatus = toLoveOrMaybe(partnerReview?.status);
+    if (!partnerStatus) continue;
 
-    const matchTier = myStatus && partnerStatus ? getMatchTier(myStatus, partnerStatus) : null;
-    const sectionKey = myStatus ?? partnerStatus!;
+    // Filters on whichever side actually reviewed it — the user's own
+    // chosen gender takes priority when they have one, same as sectionKey
+    // below, otherwise the partner's (see CONTEXT.md's "Genre choisi").
+    const genderForFilter = myReview?.gender ?? partnerReview!.gender;
+    if (selectedGender !== 'all' && !matchesReviewGenderFilter(genderForFilter, selectedGender)) continue;
+
+    const matchTier = myStatus ? getMatchTier(myStatus, partnerStatus) : null;
+    const sectionKey = myStatus ?? partnerStatus;
     groups[sectionKey].push({ name, myStatus, matchTier });
   }
 
