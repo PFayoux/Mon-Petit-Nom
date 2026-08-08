@@ -37,7 +37,11 @@
       "expo-localization",
       "./plugins/withReleaseSigning",
       "./plugins/withCiVersion",
-      ["./plugins/withAndroidWindowBackground", "#FCEEE3"]
+      [
+        "./plugins/withAndroidWindowBackground",
+        "#FCEEE3"
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
