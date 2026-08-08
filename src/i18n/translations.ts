@@ -51,6 +51,8 @@ export type Translations = {
     resetConfirmMessage: string;
     shareButton: string;
     shareErrorMessage: string;
+    importButton: string;
+    importErrorMessage: string;
   };
 };
 
@@ -108,6 +110,8 @@ const en: Translations = {
     resetConfirmMessage: 'This will clear every name you have reviewed. This cannot be undone.',
     shareButton: 'Share my list',
     shareErrorMessage: 'Could not share your list. Please try again.',
+    importButton: 'Import a list',
+    importErrorMessage: 'Could not import this file. Please check it is a list exported from this app.',
   },
 };
 
@@ -165,6 +169,8 @@ const fr: Translations = {
     resetConfirmMessage: 'Tous les prénoms déjà classés seront remis à zéro. Action irréversible.',
     shareButton: 'Partager ma liste',
     shareErrorMessage: 'Impossible de partager ta liste. Réessaie.',
+    importButton: 'Importer une liste',
+    importErrorMessage: "Impossible d'importer ce fichier. Vérifie qu'il s'agit bien d'une liste exportée depuis l'app.",
   },
 };
 
