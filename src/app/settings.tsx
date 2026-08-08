@@ -14,7 +14,17 @@ import { buildPartnerExport, exportPartnerProfile } from '@/lib/partner-export';
 import { parsePartnerProfile } from '@/lib/partner-import';
 
 export default function SettingsScreen() {
-  const { displayName, setDisplayName, resetAllReviews, reviews, importPartnerProfile } = useAppStore();
+  const {
+    displayName,
+    setDisplayName,
+    resetAllReviews,
+    reviews,
+    partnerProfiles,
+    activePartnerName,
+    importPartnerProfile,
+    removePartnerProfile,
+    setActivePartnerName,
+  } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -73,6 +83,10 @@ export default function SettingsScreen() {
     }
   }
 
+  function handleTogglePartner(name: string) {
+    setActivePartnerName(name === activePartnerName ? null : name);
+  }
+
   return (
     <ScrollView
       style={[styles.scrollView, { backgroundColor: theme.background }]}
@@ -120,6 +134,43 @@ export default function SettingsScreen() {
                   {t.settings.importButton}
                 </ThemedText>
               </Pressable>
+
+              {partnerProfiles.length > 0 && (
+                <View style={styles.settingsRow}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {t.settings.partnerProfilesTitle}
+                  </ThemedText>
+                  <View style={styles.partnerList}>
+                    {partnerProfiles.map((profile) => {
+                      const isActive = profile.displayName === activePartnerName;
+                      return (
+                        <View key={profile.displayName} style={styles.partnerRow}>
+                          <Pressable
+                            accessibilityLabel={
+                              isActive
+                                ? t.settings.deselectPartnerButton(profile.displayName)
+                                : t.settings.selectPartnerButton(profile.displayName)
+                            }
+                            onPress={() => handleTogglePartner(profile.displayName)}
+                            style={({ pressed }) => [styles.partnerPill, pressed && styles.pressed]}>
+                            <ThemedView type={isActive ? 'primary' : 'surface'} style={styles.partnerPillInner}>
+                              <ThemedText type="small" themeColor={isActive ? 'onPrimary' : 'text'}>
+                                {profile.displayName}
+                              </ThemedText>
+                            </ThemedView>
+                          </Pressable>
+                          <Pressable
+                            accessibilityLabel={t.settings.removePartnerButton(profile.displayName)}
+                            onPress={() => removePartnerProfile(profile.displayName)}
+                            style={({ pressed }) => [styles.removePartnerButton, pressed && styles.pressed]}>
+                            <ThemedText style={styles.removePartnerIcon}>✕</ThemedText>
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
             </>
           )}
 
@@ -167,6 +218,34 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     alignSelf: 'flex-start',
+  },
+  partnerList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  partnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  partnerPill: {
+    flexShrink: 1,
+  },
+  partnerPillInner: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.five,
+  },
+  removePartnerButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removePartnerIcon: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   pressed: {
     opacity: 0.7,
