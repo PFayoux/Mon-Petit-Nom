@@ -18,7 +18,7 @@ import {
   savePartnerProfiles,
   saveReviews,
 } from '@/lib/storage';
-import type { Gender, PartnerProfile, ReviewMap, ReviewStatus } from '@/types/name';
+import type { Backup, Gender, PartnerProfile, ReviewMap, ReviewStatus } from '@/types/name';
 
 type AppStore = {
   isHydrated: boolean;
@@ -34,6 +34,7 @@ type AppStore = {
   importPartnerProfile: (profile: PartnerProfile) => void;
   removePartnerProfile: (displayName: string) => void;
   setActivePartnerName: (displayName: string | null) => void;
+  restoreFromBackup: (backup: Backup) => void;
 };
 
 const AppStoreContext = createContext<AppStore | null>(null);
@@ -114,6 +115,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Wholesale replace, not a merge — a backup is a full snapshot of a phone's
+  // state, and restoring it is meant to reproduce that state exactly (see
+  // ADR-0010), same as the destructive-confirm UX around resetAllReviews.
+  const restoreFromBackup = useCallback((backup: Backup) => {
+    setDisplayNameState(backup.displayName);
+    saveDisplayName(backup.displayName);
+    setReviews(backup.reviews);
+    saveReviews(backup.reviews);
+    setPartnerProfiles(backup.partnerProfiles);
+    savePartnerProfiles(backup.partnerProfiles);
+    setActivePartnerNameState(backup.activePartnerName);
+    saveActivePartnerName(backup.activePartnerName);
+  }, []);
+
   const activePartnerProfile = useMemo(
     () => partnerProfiles.find((profile) => profile.displayName === activePartnerName) ?? null,
     [partnerProfiles, activePartnerName]
@@ -134,6 +149,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       importPartnerProfile,
       removePartnerProfile,
       setActivePartnerName,
+      restoreFromBackup,
     }),
     [
       isHydrated,
@@ -149,6 +165,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       importPartnerProfile,
       removePartnerProfile,
       setActivePartnerName,
+      restoreFromBackup,
     ]
   );
 

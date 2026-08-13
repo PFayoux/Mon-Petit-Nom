@@ -39,6 +39,10 @@ export async function seedAppStore({
 
 // Reads back what the app actually persisted, for asserting on state that
 // isn't (yet) surfaced anywhere in the UI.
+export async function getStoredDisplayName(): Promise<string | null> {
+  return AsyncStorage.getItem(DISPLAY_NAME_KEY);
+}
+
 export async function getStoredReviews(): Promise<ReviewMap> {
   const raw = await AsyncStorage.getItem(REVIEWS_KEY);
   return raw ? JSON.parse(raw) : {};
