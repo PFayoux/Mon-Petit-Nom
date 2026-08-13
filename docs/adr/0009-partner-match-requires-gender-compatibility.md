@@ -1,0 +1,20 @@
+# La correspondance entre partenaires exige aussi la compatibilité de genre, pas seulement le statut
+
+La logique de "correspondance" ([CONTEXT.md](../../CONTEXT.md)) ne comparait jusqu'ici que le statut (`love`/`maybe`) des deux côtés, jamais le genre choisi. Un prénom aimé par l'utilisateur pour un garçon et par son/sa partenaire pour une fille comptait donc comme une correspondance forte à part entière, cœur rose inclus — alors que les deux personnes n'étaient en réalité d'accord sur rien : l'utilisateur avait explicitement choisi "garçon" plutôt que "les deux", ce qui exclut une fille. Ce n'était pas voulu : une confusion lors de la conception initiale de la feature (voir [ADR-0008](./0008-partner-list-sharing-via-file-export.md)) avait laissé cet aspect de côté.
+
+Le bug qui a révélé le problème était plus étroit : `groupNamesByPartnerMatch` calculait le genre servant à filtrer l'onglet Partenaire à partir de `myReview.gender` dès que l'utilisateur avait *une* review sur le prénom, sans vérifier que son statut était `love`/`maybe`. Comme un `dislike` est toujours enregistré avec `gender: 'both'` ([CONTEXT.md](../../CONTEXT.md), "Review"), un prénom disliké par l'utilisateur mais aimé par le partenaire pouvait apparaître à la fois sous l'onglet Garçon et l'onglet Fille. En creusant ce bug, on s'est rendu compte que le problème de fond était plus large : même hors des cas de `dislike`, la règle de correspondance ignorait complètement le genre choisi.
+
+Décision : une correspondance exige désormais que le statut **et** le genre choisi soient compatibles des deux côtés. Deux genres sont compatibles s'ils sont identiques, ou si l'un des deux vaut `both` (`both` agit comme un joker : choisir "les deux" n'exclut ni garçon ni fille, donc ça ne bloque jamais une correspondance avec un choix précis de l'autre côté). Quand le statut est compatible mais pas le genre, le prénom n'est plus une correspondance — il redevient une simple **découverte** : visible dans l'onglet Partenaire, classé sous le statut et le genre du/de la partenaire, mais sans cœur. Plus généralement, le genre sous lequel un prénom apparaît dans l'onglet Partenaire suit désormais toujours le choix du partenaire, jamais celui de l'utilisateur, de sorte que ses choix restent visibles même quand il n'y a pas de correspondance possible avec les miens.
+
+## Status
+accepted
+
+## Considered Options
+- **Garder la règle initiale (statut seul)** : plus simple, mais un cœur de correspondance sur un prénom aimé pour des genres différents n'a pas de sens pour un couple qui cherche un prénom pour un enfant d'un genre donné — écarté à la demande du produit.
+- **Exclure totalement le prénom de l'onglet Partenaire quand les genres divergent** (au lieu de le montrer comme découverte) : envisagé un temps, mais ça masquerait le fait que le partenaire a choisi ce prénom pour son propre genre, ce qui va à l'encontre du but premier de la feature (voir les prénoms que le partenaire a aimés) — écarté au profit de la découverte sans cœur.
+- **`both` non compatible avec un genre précis** (correspondance stricte, `boy`=`boy`/`girl`=`girl`/`both`=`both` uniquement) : plus simple à implémenter, mais casse le rôle de joker que `both` a déjà partout ailleurs dans l'app (voir `matchesReviewGenderFilter` dans `src/data/names.ts`) — écarté pour rester cohérent.
+
+## Consequences
+- `groupNamesByPartnerMatch` (`src/lib/partner-matching.ts`) porte maintenant toute cette logique : compatibilité de genre en plus du statut, et filtrage de l'onglet Partenaire toujours sur le genre choisi par le partenaire.
+- Le champ `myStatus` d'une entrée peut désormais être défini (l'utilisateur a bien une review) alors que `matchTier` vaut `null` — un nouveau cas qui n'existait pas avant (jusque-là, `matchTier: null` impliquait `myStatus: undefined`).
+- Aucun changement de format de fichier exporté ni de migration nécessaire : la review de chaque personne garde son `{ status, gender }` habituel, seule la façon de les rapprocher change.
