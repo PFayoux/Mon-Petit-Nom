@@ -6,11 +6,13 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { OnboardingScreen } from '@/components/onboarding-screen';
 import { AppStoreProvider, useAppStore } from '@/hooks/use-app-store';
+import { useSharedFileImport } from '@/hooks/use-shared-file-import';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootNavigation() {
   const { isHydrated, displayName } = useAppStore();
+  useSharedFileImport();
 
   if (!isHydrated) {
     return null;

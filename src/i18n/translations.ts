@@ -68,6 +68,7 @@ export type Translations = {
     restoreErrorMessage: string;
     restoreConfirmTitle: string;
     restoreConfirmMessage: string;
+    unrecognizedFileMessage: string;
   };
 };
 
@@ -143,6 +144,7 @@ const en: Translations = {
     restoreConfirmTitle: 'Restore this backup?',
     restoreConfirmMessage:
       'This will replace all your current data (reviewed names, partner lists) with the backup. This cannot be undone.',
+    unrecognizedFileMessage: "This file isn't recognized by Mon Petit Nom.",
   },
 };
 
@@ -219,6 +221,7 @@ const fr: Translations = {
     restoreConfirmTitle: 'Restaurer cette sauvegarde ?',
     restoreConfirmMessage:
       'Toutes tes données actuelles (prénoms classés, listes partenaires) seront remplacées par celles de la sauvegarde. Action irréversible.',
+    unrecognizedFileMessage: "Ce fichier n'est pas reconnu par Mon Petit Nom.",
   },
 };
 
