@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
 import { GenderPicker } from '@/components/gender-picker';
-import { NameCard } from '@/components/name-card';
 import { SegmentedTabBar } from '@/components/segmented-tab-bar';
+import { SwipeableNameCard } from '@/components/swipeable-name-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
@@ -126,11 +126,12 @@ export default function SwipeScreen() {
         <View testID="swipeDeck" style={styles.deck} onLayout={handleDeckLayout}>
           {cardSize &&
             (currentName ? (
-              <NameCard
+              <SwipeableNameCard
                 name={currentName}
                 boyCount={COUNTS_BY_NAME.get(currentName)!.boyCount}
                 girlCount={COUNTS_BY_NAME.get(currentName)!.girlCount}
                 style={cardSize}
+                onDecision={handleDecision}
               />
             ) : (
               <ThemedView type="surface" style={[styles.emptyState, cardSize]}>
