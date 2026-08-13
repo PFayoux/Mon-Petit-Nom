@@ -35,3 +35,7 @@ _Avoid_: Match (préférer le terme français, cohérent avec le reste du glossa
 **Sauvegarde** :
 Un fichier `{ kind: 'backup', version, displayName, reviews, partnerProfiles, activePartnerName }`, à ne pas confondre avec un **profil partenaire** : elle contient tout l'état local de l'utilisateur, y compris ses `dislike`, et sert à restaurer son propre téléphone (changement d'appareil, réinstallation) — pas à être lue par quelqu'un d'autre (voir [ADR-0010](./docs/adr/0010-personal-data-backup-and-restore.md)). Restaurer une sauvegarde remplace entièrement l'état local courant, ce n'est jamais une fusion.
 _Avoid_: Export, sauvegarde (seul, sans précision — toujours distinguer d'un "profil partenaire", qui est un export partiel destiné à être partagé)
+
+**Fichier partagé** :
+Un fichier `.json` ouvert dans l'app via "Ouvrir avec Mon Petit Nom" depuis une autre app (WhatsApp, un gestionnaire de fichiers…), sur Android uniquement (voir [ADR-0011](./docs/adr/0011-open-with-shared-json-files.md)). Son contenu est identifié après coup (`kind: 'backup'` vs `displayName`+`reviews` non taggé) car Android ne permet pas de filtrer plus finement que le type MIME `application/json`, partagé par bien d'autres apps. Une fois identifié, il suit exactement le même chemin qu'un import/restauration déclenché depuis Réglages ; un fichier non reconnu affiche un message dédié plutôt que d'être traité comme une erreur d'import classique.
+_Avoid_: Deep link (ce n'est pas un lien vers une route de l'app, mais un fichier reçu via un intent `VIEW`/MIME type)
