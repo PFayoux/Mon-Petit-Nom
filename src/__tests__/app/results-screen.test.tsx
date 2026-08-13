@@ -197,6 +197,72 @@ describe('ResultsScreen', () => {
     });
   });
 
+  describe('searching within the current tab', () => {
+    test('Given a query matching a name in the current tab, When typed, Then only matching names remain visible', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await screen.findByText(BOY_ONLY_NAME);
+
+      await user.type(screen.getByTestId('resultsSearchInput'), BOY_ONLY_NAME.slice(0, 3));
+
+      expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given an active search query, Then the tab counts stay based on the unfiltered set', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText(`Unmarked (${NAMES.length})`);
+
+      await user.type(screen.getByTestId('resultsSearchInput'), BOY_ONLY_NAME);
+
+      expect(screen.getByText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
+    });
+
+    test('Given a search query matching nothing, Then a search-specific empty message is shown instead of the generic one', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText(`Unmarked (${NAMES.length})`);
+
+      await user.type(screen.getByTestId('resultsSearchInput'), 'zzzzzz');
+
+      expect(await screen.findByText('No names match "zzzzzz"')).toBeOnTheScreen();
+      expect(screen.queryByText('No names here yet')).not.toBeOnTheScreen();
+    });
+
+    test('Given a query typed in accent-free lowercase, When it matches an accented name, Then that name still appears', async () => {
+      const user = userEvent.setup();
+      // Émile is in src/data/names.ts — accent-free "emi" should still match it.
+      // It sorts near the end of a plain-codepoint comparison, so it isn't
+      // among the list's initially-rendered rows before searching narrows
+      // the list down to just itself.
+      const accentedName = 'Émile';
+      expect(NAMES.some((entry) => entry.name === accentedName)).toBe(true);
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await screen.findByTestId('resultsSearchInput');
+
+      await user.type(screen.getByTestId('resultsSearchInput'), 'emi');
+
+      expect(await screen.findByText(accentedName)).toBeOnTheScreen();
+    });
+
+    test('Given the user presses the clear button, When pressed, Then the search query is cleared and the full list returns', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await screen.findByText(BOY_ONLY_NAME);
+      await user.type(screen.getByTestId('resultsSearchInput'), 'zzzzzz');
+      await screen.findByText('No names match "zzzzzz"');
+
+      await user.press(screen.getByLabelText('Clear search'));
+
+      expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.queryByText('No names match "zzzzzz"')).not.toBeOnTheScreen();
+    });
+  });
+
   describe('comparing with a partner', () => {
     // Not a real first name in NAMES, so text queries for it can't collide with a rendered row.
     const PARTNER_NAME = 'PartnerUser';

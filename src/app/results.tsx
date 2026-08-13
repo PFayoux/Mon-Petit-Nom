@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, ListRenderItemInfo, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, ListRenderItemInfo, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -12,6 +12,7 @@ import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesReviewGenderFilte
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
+import { matchesNameQuery } from '@/lib/name-search';
 import { groupNamesByPartnerMatch, type MatchTier } from '@/lib/partner-matching';
 import type { Gender, ReviewMap, ReviewStatus } from '@/types/name';
 
@@ -133,6 +134,7 @@ export default function ResultsScreen() {
   const [selectedStatus, setSelectedStatus] = useState<StatusSectionKey>('love');
   const [selectedView, setSelectedView] = useState<ResultsViewKey>('me');
   const [editingGenderName, setEditingGenderName] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const groups = useMemo(() => groupNamesByStatus(reviews, NAMES, selectedGender), [reviews, selectedGender]);
 
@@ -200,6 +202,11 @@ export default function ResultsScreen() {
     isPartnerView && (selectedStatus === 'love' || selectedStatus === 'maybe')
       ? partnerMatches[selectedStatus].map((entry) => entry.name)
       : groups[selectedStatus];
+
+  // Search narrows whatever the gender/view/status tabs already show — it
+  // never widens the list, and tab counts above stay based on the unfiltered
+  // set so switching status/gender tabs doesn't visually jump around.
+  const displayedNames = selectedNames.filter((name) => matchesNameQuery(name, searchQuery));
 
   const handleRowSelect = useCallback(
     (name: string, status: ReviewStatus) => {
@@ -271,13 +278,37 @@ export default function ResultsScreen() {
           )}
           <View style={styles.headerGap} />
           <SegmentedTabBar sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
+          <View style={styles.headerGap} />
+          <View style={styles.searchRow}>
+            <TextInput
+              testID="resultsSearchInput"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={t.results.searchPlaceholder}
+              placeholderTextColor={theme.textSecondary}
+              autoCorrect={false}
+              autoCapitalize="none"
+              style={[
+                styles.searchInput,
+                { color: theme.text, backgroundColor: theme.surface, borderColor: theme.border },
+              ]}
+            />
+            {searchQuery.length > 0 && (
+              <Pressable
+                accessibilityLabel={t.results.clearSearchButton}
+                onPress={() => setSearchQuery('')}
+                style={({ pressed }) => [styles.clearSearchButton, pressed && styles.pressed]}>
+                <ThemedText style={styles.clearSearchIcon}>✕</ThemedText>
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
 
       <FlatList
         style={styles.list}
         contentContainerStyle={styles.listContent}
-        data={selectedNames}
+        data={displayedNames}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
@@ -285,7 +316,7 @@ export default function ResultsScreen() {
         windowSize={7}
         ListEmptyComponent={
           <ThemedText themeColor="textSecondary" type="small">
-            {t.results.emptySection}
+            {searchQuery.trim() ? t.results.emptySearchResults(searchQuery.trim()) : t.results.emptySection}
           </ThemedText>
         }
       />
@@ -341,6 +372,29 @@ const styles = StyleSheet.create({
   },
   headerGap: {
     height: Spacing.two,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderRadius: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    fontSize: 16,
+  },
+  clearSearchButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clearSearchIcon: {
+    fontSize: 16,
+    lineHeight: 20,
   },
   list: {
     flex: 1,

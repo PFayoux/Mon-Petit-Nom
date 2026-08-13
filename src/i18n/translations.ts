@@ -46,6 +46,9 @@ export type Translations = {
     strongMatchLabel: string;
     partialMatchLabel: string;
     softMatchLabel: string;
+    searchPlaceholder: string;
+    clearSearchButton: string;
+    emptySearchResults: (query: string) => string;
   };
   settings: {
     title: string;
@@ -121,6 +124,9 @@ const en: Translations = {
     strongMatchLabel: 'Both loved',
     partialMatchLabel: 'One loved, one maybe',
     softMatchLabel: 'Both maybe',
+    searchPlaceholder: 'Search a name',
+    clearSearchButton: 'Clear search',
+    emptySearchResults: (query) => `No names match "${query}"`,
   },
   settings: {
     title: 'Settings',
@@ -197,6 +203,9 @@ const fr: Translations = {
     strongMatchLabel: 'Vous adorez tous les deux',
     partialMatchLabel: "L'un adore, l'autre pense peut-être",
     softMatchLabel: 'Vous hésitez tous les deux',
+    searchPlaceholder: 'Rechercher un prénom',
+    clearSearchButton: 'Effacer la recherche',
+    emptySearchResults: (query) => `Aucun prénom ne correspond à « ${query} »`,
   },
   settings: {
     title: 'Réglages',
