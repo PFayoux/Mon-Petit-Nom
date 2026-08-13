@@ -32,3 +32,17 @@ export type PartnerProfile = {
   displayName: string;
   reviews: ReviewMap;
 };
+
+// A full local backup of the user's own state — meant to restore this same
+// phone (new device, reinstall), not to be read by someone else. Unlike
+// PartnerProfile, `reviews` keeps every status including `dislike`. `version`
+// is the backup file format, not the app's own version — see ADR-0010 and
+// CONTEXT.md's "Sauvegarde".
+export type Backup = {
+  kind: 'backup';
+  version: 1;
+  displayName: string;
+  reviews: ReviewMap;
+  partnerProfiles: PartnerProfile[];
+  activePartnerName: string | null;
+};

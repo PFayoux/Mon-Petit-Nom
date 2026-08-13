@@ -61,6 +61,13 @@ export type Translations = {
     selectPartnerButton: (name: string) => string;
     deselectPartnerButton: (name: string) => string;
     removePartnerButton: (name: string) => string;
+    backupTitle: string;
+    backupButton: string;
+    backupErrorMessage: string;
+    restoreButton: string;
+    restoreErrorMessage: string;
+    restoreConfirmTitle: string;
+    restoreConfirmMessage: string;
   };
 };
 
@@ -128,6 +135,14 @@ const en: Translations = {
     selectPartnerButton: (name) => `Compare with ${name}`,
     deselectPartnerButton: (name) => `Stop comparing with ${name}`,
     removePartnerButton: (name) => `Remove ${name}'s list`,
+    backupTitle: 'Backup',
+    backupButton: 'Back up my data',
+    backupErrorMessage: 'Could not create a backup. Please try again.',
+    restoreButton: 'Restore a backup',
+    restoreErrorMessage: 'Could not restore this file. Please check it is a backup exported from this app.',
+    restoreConfirmTitle: 'Restore this backup?',
+    restoreConfirmMessage:
+      'This will replace all your current data (reviewed names, partner lists) with the backup. This cannot be undone.',
   },
 };
 
@@ -195,6 +210,15 @@ const fr: Translations = {
     selectPartnerButton: (name) => `Comparer avec ${name}`,
     deselectPartnerButton: (name) => `Arrêter de comparer avec ${name}`,
     removePartnerButton: (name) => `Supprimer la liste de ${name}`,
+    backupTitle: 'Sauvegarde',
+    backupButton: 'Sauvegarder mes données',
+    backupErrorMessage: 'Impossible de créer la sauvegarde. Réessaie.',
+    restoreButton: 'Restaurer une sauvegarde',
+    restoreErrorMessage:
+      "Impossible de restaurer ce fichier. Vérifie qu'il s'agit bien d'une sauvegarde exportée depuis l'app.",
+    restoreConfirmTitle: 'Restaurer cette sauvegarde ?',
+    restoreConfirmMessage:
+      'Toutes tes données actuelles (prénoms classés, listes partenaires) seront remplacées par celles de la sauvegarde. Action irréversible.',
   },
 };
 

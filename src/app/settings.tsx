@@ -10,8 +10,11 @@ import { MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
+import { buildBackup, exportBackup } from '@/lib/backup-export';
+import { parseBackup } from '@/lib/backup-import';
 import { buildPartnerExport, exportPartnerProfile } from '@/lib/partner-export';
 import { parsePartnerProfile } from '@/lib/partner-import';
+import type { Backup } from '@/types/name';
 
 export default function SettingsScreen() {
   const {
@@ -24,19 +27,20 @@ export default function SettingsScreen() {
     importPartnerProfile,
     removePartnerProfile,
     setActivePartnerName,
+    restoreFromBackup,
   } = useAppStore();
   const t = useTranslation();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [nameDraft, setNameDraft] = useState(displayName ?? '');
-  // Partner list sharing is scoped to iOS/Android: expo-sharing doesn't support
-  // sharing local files on web, so import is hidden alongside it there too
-  // rather than offering half a feature (see ADR-0008).
-  const [canSharePartnerLists, setCanSharePartnerLists] = useState(false);
+  // Partner list sharing and personal backups both go through expo-sharing /
+  // the file picker, which don't support local files on web — both are
+  // hidden there rather than offering half a feature (see ADR-0008).
+  const [canUseFileSharing, setCanUseFileSharing] = useState(false);
 
   useEffect(() => {
-    Sharing.isAvailableAsync().then(setCanSharePartnerLists);
+    Sharing.isAvailableAsync().then(setCanUseFileSharing);
   }, []);
 
   function handleSaveDisplayName() {
@@ -78,13 +82,44 @@ export default function SettingsScreen() {
       const jsonText = await picked.result.text();
       importPartnerProfile(parsePartnerProfile(jsonText));
     } catch {
-      // canSharePartnerLists gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
+      // canUseFileSharing gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
       Alert.alert(t.settings.importErrorMessage);
     }
   }
 
   function handleTogglePartner(name: string) {
     setActivePartnerName(name === activePartnerName ? null : name);
+  }
+
+  async function handleBackupPress() {
+    if (!displayName) return;
+    try {
+      await exportBackup(buildBackup(displayName, reviews, partnerProfiles, activePartnerName));
+    } catch {
+      // canUseFileSharing gates this button off on web, so Alert.alert() (a no-op there) is always safe here.
+      Alert.alert(t.settings.backupErrorMessage);
+    }
+  }
+
+  async function handleRestorePress() {
+    const picked = await File.pickFileAsync({ mimeTypes: 'application/json' });
+    if (picked.canceled) return;
+
+    let backup: Backup;
+    try {
+      const jsonText = await picked.result.text();
+      backup = parseBackup(jsonText);
+    } catch {
+      Alert.alert(t.settings.restoreErrorMessage);
+      return;
+    }
+
+    // Restoring replaces everything on this phone — always confirm first,
+    // same destructive-action pattern as handleResetPress.
+    Alert.alert(t.settings.restoreConfirmTitle, t.settings.restoreConfirmMessage, [
+      { text: t.common.cancel, style: 'cancel' },
+      { text: t.settings.restoreButton, style: 'destructive', onPress: () => restoreFromBackup(backup) },
+    ]);
   }
 
   return (
@@ -117,7 +152,7 @@ export default function SettingsScreen() {
             />
           </View>
 
-          {canSharePartnerLists && (
+          {canUseFileSharing && (
             <>
               <Pressable
                 onPress={handleSharePress}
@@ -182,6 +217,28 @@ export default function SettingsScreen() {
             </ThemedText>
           </Pressable>
         </ThemedView>
+
+        {canUseFileSharing && (
+          <ThemedView type="surface" style={styles.settings}>
+            <ThemedText type="smallBold">{t.settings.backupTitle}</ThemedText>
+
+            <Pressable
+              onPress={handleBackupPress}
+              style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="text">
+                {t.settings.backupButton}
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={handleRestorePress}
+              style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
+              <ThemedText type="link" themeColor="text">
+                {t.settings.restoreButton}
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+        )}
       </ThemedView>
     </ScrollView>
   );
