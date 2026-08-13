@@ -18,7 +18,18 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.pfayoux.monpetitnom"
+      "package": "com.pfayoux.monpetitnom",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT"],
+          "data": [
+            {
+              "mimeType": "application/json"
+            }
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",
