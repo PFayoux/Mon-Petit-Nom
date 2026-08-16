@@ -249,7 +249,7 @@ const StatusTabPill = memo(function StatusTabPill({
 const SectionHeader = memo(function SectionHeader({ title }: { title: string }) {
   const theme = useTheme();
   return (
-    <ThemedView style={styles.sectionHeader}>
+    <ThemedView style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
       <ThemedView type="surface" style={[styles.sectionHeaderBadge, { borderColor: theme.border }]}>
         <ThemedText type="smallBold">{title}</ThemedText>
       </ThemedView>
@@ -604,6 +604,7 @@ const styles = StyleSheet.create({
     height: SECTION_HEADER_HEIGHT,
     justifyContent: 'center',
     marginBottom: SECTION_HEADER_GAP,
+    borderBottomWidth: 1,
   },
   sectionHeaderBadge: {
     width: SECTION_HEADER_HEIGHT,
