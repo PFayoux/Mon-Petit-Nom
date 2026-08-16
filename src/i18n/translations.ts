@@ -49,6 +49,8 @@ export type Translations = {
     searchPlaceholder: string;
     clearSearchButton: string;
     emptySearchResults: (query: string) => string;
+    previousStatusTabButton: string;
+    nextStatusTabButton: string;
   };
   settings: {
     title: string;
@@ -127,6 +129,8 @@ const en: Translations = {
     searchPlaceholder: 'Search a name',
     clearSearchButton: 'Clear search',
     emptySearchResults: (query) => `No names match "${query}"`,
+    previousStatusTabButton: 'Previous status',
+    nextStatusTabButton: 'Next status',
   },
   settings: {
     title: 'Settings',
@@ -206,6 +210,8 @@ const fr: Translations = {
     searchPlaceholder: 'Rechercher un prénom',
     clearSearchButton: 'Effacer la recherche',
     emptySearchResults: (query) => `Aucun prénom ne correspond à « ${query} »`,
+    previousStatusTabButton: 'Statut précédent',
+    nextStatusTabButton: 'Statut suivant',
   },
   settings: {
     title: 'Réglages',

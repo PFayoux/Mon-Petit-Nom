@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, ListRenderItemInfo, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecisionButtons } from '@/components/decision-buttons';
@@ -77,6 +79,15 @@ function groupNamesByStatus(
   return groups;
 }
 
+type StatusSection = { key: StatusSectionKey; label: string; count: number };
+
+const SWIPE_THRESHOLD = 40;
+
+function cycleStatus(sections: StatusSection[], selected: StatusSectionKey, direction: 1 | -1): StatusSectionKey {
+  const index = sections.findIndex((section) => section.key === selected);
+  return sections[(index + direction + sections.length) % sections.length].key;
+}
+
 const MATCH_TIER_LABEL_KEY: Record<MatchTier, 'strongMatchLabel' | 'partialMatchLabel' | 'softMatchLabel'> = {
   strong: 'strongMatchLabel',
   partial: 'partialMatchLabel',
@@ -121,6 +132,81 @@ const NameReviewRow = memo(function NameReviewRow({
         )}
       </View>
     </View>
+  );
+});
+
+// The active status (Loved/Maybe/Disliked/Unmarked) is the only one shown as
+// a label — the rest are dots, tappable for a direct jump. A pan gesture
+// anywhere on the pill also cycles it (not just via the ‹ › buttons):
+// activeOffsetX gives it a small deadzone so a tap doesn't register as a
+// drag, and failOffsetY yields to a more-vertical gesture (e.g. scrolling
+// the list right below it).
+const StatusTabPill = memo(function StatusTabPill({
+  sections,
+  selected,
+  onSelect,
+}: {
+  sections: StatusSection[];
+  selected: StatusSectionKey;
+  onSelect: (key: StatusSectionKey) => void;
+}) {
+  const theme = useTheme();
+  const t = useTranslation();
+
+  const goToPrevious = useCallback(
+    () => onSelect(cycleStatus(sections, selected, -1)),
+    [sections, selected, onSelect]
+  );
+  const goToNext = useCallback(() => onSelect(cycleStatus(sections, selected, 1)), [sections, selected, onSelect]);
+
+  const gesture = Gesture.Pan()
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-20, 20])
+    .onEnd((event) => {
+      if (event.translationX < -SWIPE_THRESHOLD) runOnJS(goToNext)();
+      else if (event.translationX > SWIPE_THRESHOLD) runOnJS(goToPrevious)();
+    });
+
+  const active = sections.find((section) => section.key === selected)!;
+
+  return (
+    <GestureDetector gesture={gesture}>
+      <ThemedView type="surface" style={styles.statusPill}>
+        <Pressable
+          accessibilityLabel={t.results.previousStatusTabButton}
+          hitSlop={8}
+          onPress={goToPrevious}
+          style={styles.chevronButton}>
+          <ThemedText type="smallBold">‹</ThemedText>
+        </Pressable>
+        <View style={styles.statusCenter}>
+          <ThemedText type="smallBold">{`${active.label} (${active.count})`}</ThemedText>
+          <View style={styles.statusDots}>
+            {sections.map((section) => (
+              <Pressable
+                key={section.key}
+                accessibilityLabel={`${section.label} (${section.count})`}
+                hitSlop={8}
+                onPress={() => onSelect(section.key)}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: section.key === selected ? theme.primary : theme.border },
+                  ]}
+                />
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <Pressable
+          accessibilityLabel={t.results.nextStatusTabButton}
+          hitSlop={8}
+          onPress={goToNext}
+          style={styles.chevronButton}>
+          <ThemedText type="smallBold">›</ThemedText>
+        </Pressable>
+      </ThemedView>
+    </GestureDetector>
   );
 });
 
@@ -186,7 +272,7 @@ export default function ResultsScreen() {
       ]
     : null;
 
-  const sections: { key: StatusSectionKey; label: string; count: number }[] = isPartnerView
+  const sections: StatusSection[] = isPartnerView
     ? [
         { key: 'love', label: t.results.lovedSection, count: partnerMatches.love.length },
         { key: 'maybe', label: t.results.maybeSection, count: partnerMatches.maybe.length },
@@ -269,15 +355,14 @@ export default function ResultsScreen() {
           { paddingTop: insets.top + TopTabInset + Spacing.four },
         ]}>
         <View style={styles.headerContent}>
-          <SegmentedTabBar sections={genderSections} selected={selectedGender} onSelect={setSelectedGender} />
-          {viewSections && (
-            <>
-              <View style={styles.headerGap} />
+          <View style={styles.filterRow}>
+            <SegmentedTabBar sections={genderSections} selected={selectedGender} onSelect={setSelectedGender} />
+            {viewSections && (
               <SegmentedTabBar sections={viewSections} selected={selectedView} onSelect={handleSelectView} />
-            </>
-          )}
+            )}
+          </View>
           <View style={styles.headerGap} />
-          <SegmentedTabBar sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
+          <StatusTabPill sections={sections} selected={selectedStatus} onSelect={setSelectedStatus} />
           <View style={styles.headerGap} />
           <View style={styles.searchRow}>
             <TextInput
@@ -372,6 +457,39 @@ const styles = StyleSheet.create({
   },
   headerGap: {
     height: Spacing.two,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: Spacing.five,
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+  },
+  chevronButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusCenter: {
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  statusDots: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   searchRow: {
     flexDirection: 'row',
