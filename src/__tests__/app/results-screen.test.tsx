@@ -13,10 +13,12 @@ describe('ResultsScreen', () => {
   test('Given no reviews yet, When the screen renders, Then every name is Unmarked and the other tabs are empty', async () => {
     await renderScreen(<ResultsScreen />);
 
-    expect(await screen.findByText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
-    expect(screen.getByText('Loved (0)')).toBeOnTheScreen();
-    expect(screen.getByText('Maybe (0)')).toBeOnTheScreen();
-    expect(screen.getByText('Disliked (0)')).toBeOnTheScreen();
+    // Loved is the default active status tab, shown as a plain label; the
+    // other three only exist as dots on the status pill (see StatusTabPill).
+    expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
+    expect(screen.getByLabelText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
+    expect(screen.getByLabelText('Maybe (0)')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Disliked (0)')).toBeOnTheScreen();
   });
 
   test('Given a boy-only name marked as loved, When the screen renders with the default "All" gender tab, Then it appears in the Loved tab', async () => {
@@ -60,7 +62,7 @@ describe('ResultsScreen', () => {
     await user.press(screen.getByLabelText('Dislike'));
 
     expect(await screen.findByText('Loved (0)')).toBeOnTheScreen();
-    expect(screen.getByText('Disliked (1)')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Disliked (1)')).toBeOnTheScreen();
   });
 
   describe('filtering by the chosen review gender', () => {
@@ -162,7 +164,7 @@ describe('ResultsScreen', () => {
     test('Given an unmarked name, Then its row has no edit-gender button', async () => {
       const user = userEvent.setup();
       await renderScreen(<ResultsScreen />);
-      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
       await screen.findByText(BOY_ONLY_NAME);
 
       expect(screen.queryByLabelText(`Edit gender for ${BOY_ONLY_NAME}`)).not.toBeOnTheScreen();
@@ -197,11 +199,60 @@ describe('ResultsScreen', () => {
     });
   });
 
+  describe('switching status tabs from the redesigned status pill', () => {
+    test('Given the Loved tab is active, When the user taps the Unmarked dot, Then the Unmarked tab becomes active', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (0)');
+
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
+
+      expect(await screen.findByText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
+      expect(screen.getByLabelText('Loved (0)')).toBeOnTheScreen();
+    });
+
+    test('Given the Loved tab is active, When the user presses the next-status button, Then the Maybe tab becomes active', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (0)');
+
+      await user.press(screen.getByLabelText('Next status'));
+
+      expect(await screen.findByText('Maybe (0)')).toBeOnTheScreen();
+    });
+
+    test('Given the Loved tab is active, When the user presses the previous-status button, Then it wraps around to the last tab (Unmarked)', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (0)');
+
+      await user.press(screen.getByLabelText('Previous status'));
+
+      expect(await screen.findByText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
+    });
+
+    test('Given the partner tab only offers Loved and Maybe, When the user presses the previous-status button from Loved, Then it wraps around to Maybe', async () => {
+      const user = userEvent.setup();
+      const PARTNER_NAME = 'PartnerUser';
+      await seedAppStore({
+        partnerProfiles: [{ displayName: PARTNER_NAME, reviews: {} }],
+        activePartnerName: PARTNER_NAME,
+      });
+      await renderScreen(<ResultsScreen />);
+      await user.press(await screen.findByText(PARTNER_NAME));
+      await screen.findByText('Loved (0)');
+
+      await user.press(screen.getByLabelText('Previous status'));
+
+      expect(await screen.findByText('Maybe (0)')).toBeOnTheScreen();
+    });
+  });
+
   describe('searching within the current tab', () => {
     test('Given a query matching a name in the current tab, When typed, Then only matching names remain visible', async () => {
       const user = userEvent.setup();
       await renderScreen(<ResultsScreen />);
-      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
       await screen.findByText(BOY_ONLY_NAME);
 
       await user.type(screen.getByTestId('resultsSearchInput'), BOY_ONLY_NAME.slice(0, 3));
@@ -213,17 +264,17 @@ describe('ResultsScreen', () => {
     test('Given an active search query, Then the tab counts stay based on the unfiltered set', async () => {
       const user = userEvent.setup();
       await renderScreen(<ResultsScreen />);
-      await screen.findByText(`Unmarked (${NAMES.length})`);
+      await screen.findByLabelText(`Unmarked (${NAMES.length})`);
 
       await user.type(screen.getByTestId('resultsSearchInput'), BOY_ONLY_NAME);
 
-      expect(screen.getByText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
+      expect(screen.getByLabelText(`Unmarked (${NAMES.length})`)).toBeOnTheScreen();
     });
 
     test('Given a search query matching nothing, Then a search-specific empty message is shown instead of the generic one', async () => {
       const user = userEvent.setup();
       await renderScreen(<ResultsScreen />);
-      await screen.findByText(`Unmarked (${NAMES.length})`);
+      await screen.findByText('Loved (0)');
 
       await user.type(screen.getByTestId('resultsSearchInput'), 'zzzzzz');
 
@@ -240,7 +291,7 @@ describe('ResultsScreen', () => {
       const accentedName = 'Émile';
       expect(NAMES.some((entry) => entry.name === accentedName)).toBe(true);
       await renderScreen(<ResultsScreen />);
-      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
       await screen.findByTestId('resultsSearchInput');
 
       await user.type(screen.getByTestId('resultsSearchInput'), 'emi');
@@ -251,7 +302,7 @@ describe('ResultsScreen', () => {
     test('Given the user presses the clear button, When pressed, Then the search query is cleared and the full list returns', async () => {
       const user = userEvent.setup();
       await renderScreen(<ResultsScreen />);
-      await user.press(screen.getByText(`Unmarked (${NAMES.length})`));
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
       await screen.findByText(BOY_ONLY_NAME);
       await user.type(screen.getByTestId('resultsSearchInput'), 'zzzzzz');
       await screen.findByText('No names match "zzzzzz"');
@@ -308,9 +359,9 @@ describe('ResultsScreen', () => {
       await user.press(await screen.findByText(PARTNER_NAME));
 
       expect(screen.getByText('Loved (0)')).toBeOnTheScreen();
-      expect(screen.getByText('Maybe (0)')).toBeOnTheScreen();
-      expect(screen.queryByText(/Disliked/)).not.toBeOnTheScreen();
-      expect(screen.queryByText(/Unmarked/)).not.toBeOnTheScreen();
+      expect(screen.getByLabelText('Maybe (0)')).toBeOnTheScreen();
+      expect(screen.queryByLabelText(/Disliked/)).not.toBeOnTheScreen();
+      expect(screen.queryByLabelText(/Unmarked/)).not.toBeOnTheScreen();
     });
 
     test('Given the partner loved a name the user has not reviewed, When viewing the partner tab, Then it appears as a discovery row', async () => {
