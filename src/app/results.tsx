@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { FlatList, ListRenderItemInfo, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Modal, Pressable, SectionList, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { GENDER_BY_NAME, NAMES, getDefaultReviewGender, matchesReviewGenderFilte
 import { useAppStore } from '@/hooks/use-app-store';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n/use-translation';
+import { type AlphabeticalSection, groupByFirstLetter } from '@/lib/alphabetical-grouping';
 import { matchesNameQuery } from '@/lib/name-search';
 import { groupNamesByPartnerMatch, type MatchTier } from '@/lib/partner-matching';
 import type { Gender, ReviewMap, ReviewStatus } from '@/types/name';
@@ -52,6 +53,41 @@ const MATCH_EMOJI: Record<MatchTier, string> = {
 const ROW_HEIGHT = 36;
 const ROW_GAP = Spacing.three;
 const ROW_SLOT_HEIGHT = ROW_HEIGHT + ROW_GAP;
+
+const SECTION_HEADER_HEIGHT = 28;
+const SECTION_HEADER_GAP = Spacing.two;
+const SECTION_HEADER_SLOT_HEIGHT = SECTION_HEADER_HEIGHT + SECTION_HEADER_GAP;
+
+// SectionList flattens each section into header-slot + N item-slots +
+// footer-slot (always +2, even without a renderSectionFooter — see
+// VirtualizedSectionList's _subExtractor), so a plain per-row offset like
+// FlatList's getItemLayout above isn't enough; this walks section boundaries
+// to find which slot `index` lands in. Cheap: at most 26 sections (A–Z).
+function getSectionItemLayout(
+  data: readonly AlphabeticalSection[] | null,
+  index: number
+): { length: number; offset: number; index: number } {
+  let offset = 0;
+  let remaining = index;
+  if (data) {
+    for (const section of data) {
+      if (remaining === 0) return { length: SECTION_HEADER_SLOT_HEIGHT, offset, index };
+      offset += SECTION_HEADER_SLOT_HEIGHT;
+      remaining -= 1;
+
+      const itemCount = section.data.length;
+      if (remaining < itemCount) {
+        return { length: ROW_SLOT_HEIGHT, offset: offset + remaining * ROW_SLOT_HEIGHT, index };
+      }
+      offset += itemCount * ROW_SLOT_HEIGHT;
+      remaining -= itemCount;
+
+      if (remaining === 0) return { length: 0, offset, index };
+      remaining -= 1;
+    }
+  }
+  return { length: 0, offset, index };
+}
 
 // Once a name has a love/maybe review, the gender the user chose for it
 // (`review.gender`) decides which gender tab it shows up in — not the name's
@@ -210,6 +246,17 @@ const StatusTabPill = memo(function StatusTabPill({
   );
 });
 
+const SectionHeader = memo(function SectionHeader({ title }: { title: string }) {
+  const theme = useTheme();
+  return (
+    <ThemedView style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
+      <ThemedText type="smallBold" themeColor="textSecondary">
+        {title}
+      </ThemedText>
+    </ThemedView>
+  );
+});
+
 export default function ResultsScreen() {
   const { reviews, setReview, activePartnerProfile } = useAppStore();
   const t = useTranslation();
@@ -292,7 +339,14 @@ export default function ResultsScreen() {
   // Search narrows whatever the gender/view/status tabs already show — it
   // never widens the list, and tab counts above stay based on the unfiltered
   // set so switching status/gender tabs doesn't visually jump around.
+  const isSearching = searchQuery.trim().length > 0;
   const displayedNames = selectedNames.filter((name) => matchesNameQuery(name, searchQuery));
+
+  // An active search collapses the letter headers (decided when the search
+  // bar itself was built) — a query already narrows the list enough that
+  // per-letter grouping is redundant, so it renders as a flat FlatList
+  // instead of the grouped SectionList below.
+  const groupedSections = useMemo(() => groupByFirstLetter(displayedNames), [displayedNames]);
 
   const handleRowSelect = useCallback(
     (name: string, status: ReviewStatus) => {
@@ -323,8 +377,11 @@ export default function ResultsScreen() {
     [editingGenderName, reviews, setReview]
   );
 
+  // Shared between the flat FlatList (searching) and the grouped SectionList
+  // (browsing) — both render callbacks hand back an object with at least an
+  // `item: string` field, which is all this needs.
   const renderItem = useCallback(
-    ({ item: name }: ListRenderItemInfo<string>) => (
+    ({ item: name }: { item: string }) => (
       <NameReviewRow
         name={name}
         status={reviews[name]?.status}
@@ -336,7 +393,11 @@ export default function ResultsScreen() {
     [reviews, matchTierByName, handleRowSelect, handleEditGender]
   );
 
-  const getItemLayout = useCallback(
+  const renderSectionHeader = useCallback(({ section }: { section: AlphabeticalSection }) => {
+    return <SectionHeader title={section.title} />;
+  }, []);
+
+  const flatItemLayout = useCallback(
     (_: ArrayLike<string> | null | undefined, index: number) => ({
       length: ROW_SLOT_HEIGHT,
       offset: ROW_SLOT_HEIGHT * index,
@@ -390,21 +451,41 @@ export default function ResultsScreen() {
         </View>
       </View>
 
-      <FlatList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        data={displayedNames}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        initialNumToRender={16}
-        windowSize={7}
-        ListEmptyComponent={
-          <ThemedText themeColor="textSecondary" type="small">
-            {searchQuery.trim() ? t.results.emptySearchResults(searchQuery.trim()) : t.results.emptySection}
-          </ThemedText>
-        }
-      />
+      {isSearching ? (
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={displayedNames}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          getItemLayout={flatItemLayout}
+          initialNumToRender={16}
+          windowSize={7}
+          ListEmptyComponent={
+            <ThemedText themeColor="textSecondary" type="small">
+              {t.results.emptySearchResults(searchQuery.trim())}
+            </ThemedText>
+          }
+        />
+      ) : (
+        <SectionList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          sections={groupedSections}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          renderSectionHeader={renderSectionHeader}
+          stickySectionHeadersEnabled
+          getItemLayout={getSectionItemLayout}
+          initialNumToRender={16}
+          windowSize={7}
+          ListEmptyComponent={
+            <ThemedText themeColor="textSecondary" type="small">
+              {t.results.emptySection}
+            </ThemedText>
+          }
+        />
+      )}
 
       <Modal
         visible={editingGenderName !== null}
@@ -516,6 +597,14 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  // Solid background (defaults to theme.background via ThemedView) so the
+  // sticky header fully occludes rows scrolling underneath it.
+  sectionHeader: {
+    height: SECTION_HEADER_HEIGHT,
+    justifyContent: 'center',
+    marginBottom: SECTION_HEADER_GAP,
+    borderBottomWidth: 1,
   },
   listContent: {
     maxWidth: MaxContentWidth,
