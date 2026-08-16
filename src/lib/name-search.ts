@@ -1,6 +1,6 @@
 // Accent- and case-insensitive prefix match, e.g. "e" matches "Émile" and
 // "Eva" alike — most users won't type accents on a quick filter.
-function normalizeForSearch(value: string): string {
+export function normalizeForSearch(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')

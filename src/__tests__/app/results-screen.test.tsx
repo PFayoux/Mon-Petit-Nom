@@ -248,6 +248,42 @@ describe('ResultsScreen', () => {
     });
   });
 
+  describe('grouping names by first letter', () => {
+    test('Given loved names starting with different letters, When the screen renders, Then each name appears under its own letter header', async () => {
+      await seedAppStore({
+        reviews: {
+          [BOY_ONLY_NAME]: { status: 'love', gender: 'boy' },
+          [BOTH_GENDER_NAME]: { status: 'love', gender: 'both' },
+        },
+      });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (2)');
+
+      expect(screen.getByText('A')).toBeOnTheScreen();
+      expect(screen.getByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.getByText('C')).toBeOnTheScreen();
+      expect(screen.getByText(BOTH_GENDER_NAME)).toBeOnTheScreen();
+    });
+
+    test('Given loved names with a plain and an accented first letter, When the screen renders, Then they share one header instead of two', async () => {
+      // Edgar and Émile — both boy-only, see src/data/names.ts.
+      const PLAIN_E_NAME = 'Edgar';
+      const ACCENTED_E_NAME = 'Émile';
+      await seedAppStore({
+        reviews: {
+          [PLAIN_E_NAME]: { status: 'love', gender: 'boy' },
+          [ACCENTED_E_NAME]: { status: 'love', gender: 'boy' },
+        },
+      });
+      await renderScreen(<ResultsScreen />);
+      await screen.findByText('Loved (2)');
+
+      expect(screen.getAllByText('E')).toHaveLength(1);
+      expect(screen.getByText(PLAIN_E_NAME)).toBeOnTheScreen();
+      expect(screen.getByText(ACCENTED_E_NAME)).toBeOnTheScreen();
+    });
+  });
+
   describe('searching within the current tab', () => {
     test('Given a query matching a name in the current tab, When typed, Then only matching names remain visible', async () => {
       const user = userEvent.setup();
@@ -259,6 +295,19 @@ describe('ResultsScreen', () => {
 
       expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
       expect(screen.queryByText(GIRL_ONLY_NAME)).not.toBeOnTheScreen();
+    });
+
+    test('Given the Unmarked tab shows a letter header, When the user starts searching, Then the header disappears', async () => {
+      const user = userEvent.setup();
+      await renderScreen(<ResultsScreen />);
+      await user.press(screen.getByLabelText(`Unmarked (${NAMES.length})`));
+      await screen.findByText(BOY_ONLY_NAME);
+      expect(screen.getByText('A')).toBeOnTheScreen();
+
+      await user.type(screen.getByTestId('resultsSearchInput'), BOY_ONLY_NAME);
+
+      expect(await screen.findByText(BOY_ONLY_NAME)).toBeOnTheScreen();
+      expect(screen.queryByText('A')).not.toBeOnTheScreen();
     });
 
     test('Given an active search query, Then the tab counts stay based on the unfiltered set', async () => {
