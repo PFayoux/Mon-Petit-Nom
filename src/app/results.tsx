@@ -247,11 +247,12 @@ const StatusTabPill = memo(function StatusTabPill({
 });
 
 const SectionHeader = memo(function SectionHeader({ title }: { title: string }) {
+  const theme = useTheme();
   return (
     <ThemedView style={styles.sectionHeader}>
-      <ThemedText type="smallBold" themeColor="textSecondary">
-        {title}
-      </ThemedText>
+      <ThemedView type="surface" style={[styles.sectionHeaderBadge, { borderColor: theme.border }]}>
+        <ThemedText type="smallBold">{title}</ThemedText>
+      </ThemedView>
     </ThemedView>
   );
 });
@@ -603,6 +604,14 @@ const styles = StyleSheet.create({
     height: SECTION_HEADER_HEIGHT,
     justifyContent: 'center',
     marginBottom: SECTION_HEADER_GAP,
+  },
+  sectionHeaderBadge: {
+    width: SECTION_HEADER_HEIGHT,
+    height: SECTION_HEADER_HEIGHT,
+    borderRadius: SECTION_HEADER_HEIGHT / 2,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listContent: {
     maxWidth: MaxContentWidth,
