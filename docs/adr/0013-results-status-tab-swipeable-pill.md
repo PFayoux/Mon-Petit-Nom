@@ -1,0 +1,6 @@
+# Le statut sur Résultats se pilote via une pastille swipable, pas un ruban d'onglets
+
+Trois variantes ont été prototypées sur l'en-tête de Résultats : une bande d'edge-swipe (seul le rang de statut change, geste limité à ~32px sur les bords de l'écran, pastilles tapables sous un libellé centré), un en-tête unifié (les rangs genre et Moi/Partenaire fusionnent en un seul rang au-dessus, la pastille de statut expose des chevrons ‹ › en plus des points), et un swipe plein écran (le geste horizontal fonctionne n'importe où sur la liste, verrouillé par direction pour ne pas gêner le scroll vertical). Le choix final est l'en-tête unifié : seul le statut actif (Adorés/Peut-être/Pas aimés/Non classés) s'affiche en libellé, les autres ne sont que des points — chacun tapable pour un saut direct — et le geste de swipe couvre toute la pastille plutôt que les seuls bords de l'écran, un écart assumé par rapport au cadrage initial ("swipe depuis le bord") : la pastille est un élément autonome, sans le `ScrollView` du rang genre à proximité, donc élargir la zone de swipe ne crée aucun conflit. La recherche (voir CONTEXT.md, "Recherche") garde sa position sous ce rang, inchangée.
+
+## Status
+accepted
